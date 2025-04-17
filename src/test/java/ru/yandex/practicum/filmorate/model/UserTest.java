@@ -31,7 +31,7 @@ class UserTest extends AbstractValidationTest<User> {
 
         Map<String, String> errors = violationsToMap(validator.validate(user));
         assertFalse(errors.isEmpty());
-        assertEquals("Email должен быть в правильном формате", errors.get("email"));
+        assertEquals("Email не может быть пустым или содержать пробелы", errors.get("email"));
     }
 
     @Test
