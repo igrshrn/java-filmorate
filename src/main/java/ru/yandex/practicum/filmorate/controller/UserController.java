@@ -3,9 +3,9 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.user.EmailAlreadyExistsException;
+import ru.yandex.practicum.filmorate.exception.AlreadyExistsException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.exception.user.UserNotFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class UserController {
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         if (emailToId.containsKey(user.getEmail())) {
-            throw new EmailAlreadyExistsException("Пользователь с email " + user.getEmail() + " уже существует");
+            throw new AlreadyExistsException("Пользователь с email " + user.getEmail() + " уже существует");
         }
 
         if (user.getName() == null || user.getName().isBlank()) {
@@ -49,7 +49,7 @@ public class UserController {
             log.info("Обновлен пользователь: {}", user);
             return user;
         } else {
-            throw new UserNotFoundException("Пользователь с id " + user.getId() + " не найден");
+            throw new NotFoundException("Пользователь с id " + user.getId() + " не найден");
         }
     }
 
@@ -62,7 +62,7 @@ public class UserController {
     public User login(@RequestParam String email) {
         return Optional.ofNullable(emailToId.get(email))
                 .map(users::get)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь с email " + email + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с email " + email + " не найден"));
     }
 
 }

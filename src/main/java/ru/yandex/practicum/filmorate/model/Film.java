@@ -5,16 +5,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import ru.yandex.practicum.filmorate.utils.validator.film.ValidFilm;
 
 import java.time.LocalDate;
 
-/**
- * Film.
- */
 @Data
 @Builder
 @ValidFilm
+@EqualsAndHashCode(of = {"name", "description", "releaseDate", "duration"})
 public class Film {
     private long id;
 

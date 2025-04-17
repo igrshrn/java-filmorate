@@ -9,9 +9,6 @@ import ru.yandex.practicum.filmorate.utils.validator.user.ValidUser;
 
 import java.time.LocalDate;
 
-/**
- * User.
- */
 @Data
 @Builder
 @ValidUser
