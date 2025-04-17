@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,9 +30,9 @@ class FilmTest extends AbstractValidationTest<Film> {
                 .duration(120)
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(film));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(film));
         assertFalse(errors.isEmpty());
-        assertEquals("Название фильма не может быть пустым", errors.get("name"));
+        assertTrue(errors.get("name").contains("Название фильма не может быть пустым"));
     }
 
     @Test
@@ -43,9 +44,9 @@ class FilmTest extends AbstractValidationTest<Film> {
                 .duration(120)
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(film));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(film));
         assertFalse(errors.isEmpty());
-        assertEquals("Описание фильма не может быть длиннее 200 символов", errors.get("description"));
+        assertTrue(errors.get("description").contains("Описание фильма не может быть длиннее 200 символов"));
     }
 
     @Test
@@ -57,9 +58,9 @@ class FilmTest extends AbstractValidationTest<Film> {
                 .duration(120)
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(film));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(film));
         assertFalse(errors.isEmpty());
-        assertEquals("Дата релиза фильма не может быть раньше 28 декабря 1895 года", errors.get("releaseDate"));
+        assertTrue(errors.get("releaseDate").contains("Дата релиза фильма не может быть раньше 28 декабря 1895 года"));
     }
 
     @Test
@@ -71,9 +72,9 @@ class FilmTest extends AbstractValidationTest<Film> {
                 .duration(-10)
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(film));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(film));
         assertFalse(errors.isEmpty());
-        assertEquals("Продолжительность фильма должна быть положительной", errors.get("duration"));
+        assertTrue(errors.get("duration").contains("Продолжительность фильма должна быть положительной"));
     }
 
     @Test
@@ -85,8 +86,8 @@ class FilmTest extends AbstractValidationTest<Film> {
                 .duration(0)
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(film));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(film));
         assertFalse(errors.isEmpty());
-        assertEquals("Продолжительность фильма должна быть положительной", errors.get("duration"));
+        assertTrue(errors.get("duration").contains("Продолжительность фильма должна быть положительной"));
     }
 }

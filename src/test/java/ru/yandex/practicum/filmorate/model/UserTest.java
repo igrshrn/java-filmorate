@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,9 +30,9 @@ class UserTest extends AbstractValidationTest<User> {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(user));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(user));
         assertFalse(errors.isEmpty());
-        assertEquals("Email не может быть пустым или содержать пробелы", errors.get("email"));
+        assertTrue(errors.get("email").contains("Email не может быть пустым или содержать пробелы"));
     }
 
     @Test
@@ -43,9 +44,23 @@ class UserTest extends AbstractValidationTest<User> {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(user));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(user));
         assertFalse(errors.isEmpty());
-        assertEquals("Email должен быть в правильном формате", errors.get("email"));
+        assertTrue(errors.get("email").contains("Email должен быть в правильном формате"));
+    }
+
+    @Test
+    void testInvalidEmailFormatRuText() {
+        User user = User.builder()
+                .email("тест@сайт.ру")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+
+        Map<String, List<String>> errors = violationsToMap(validator.validate(user));
+        assertFalse(errors.isEmpty());
+        assertTrue(errors.get("email").contains("Email должен содержать только латинские буквы"));
     }
 
     @Test
@@ -57,9 +72,10 @@ class UserTest extends AbstractValidationTest<User> {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(user));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(user));
         assertFalse(errors.isEmpty());
-        assertEquals("Логин не может быть пустым и не может содержать пробелы", errors.get("login"));
+        assertTrue(errors.get("login").contains("Логин не может быть пустым и не может содержать пробелы"));
+
     }
 
     @Test
@@ -71,9 +87,9 @@ class UserTest extends AbstractValidationTest<User> {
                 .birthday(LocalDate.now().plusDays(1))
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(user));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(user));
         assertFalse(errors.isEmpty());
-        assertEquals("Дата рождения пользователя не может быть в будущем", errors.get("birthday"));
+        assertTrue(errors.get("birthday").contains("Дата рождения пользователя не может быть в будущем"));
     }
 
     @Test
@@ -85,8 +101,8 @@ class UserTest extends AbstractValidationTest<User> {
                 .birthday(null)
                 .build();
 
-        Map<String, String> errors = violationsToMap(validator.validate(user));
+        Map<String, List<String>> errors = violationsToMap(validator.validate(user));
         assertFalse(errors.isEmpty());
-        assertEquals("Дата рождения не может быть пустой", errors.get("birthday"));
+        assertTrue(errors.get("birthday").contains("Дата рождения не может быть пустой"));
     }
 }
