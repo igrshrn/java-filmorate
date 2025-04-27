@@ -1,15 +1,16 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
 
-@Slf4j
+@Validated
 @RestController
 @RequestMapping("/films")
 public class FilmController {
@@ -22,7 +23,6 @@ public class FilmController {
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        System.out.println(film);
         return filmService.create(film);
     }
 
@@ -37,27 +37,27 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable long id) {
+    public Film getFilmById(@PathVariable @Positive long id) {
         return filmService.getFilmById(id);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteFilm(@PathVariable long id) {
+    public void deleteFilm(@PathVariable @Positive long id) {
         filmService.delete(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable long id, @PathVariable long userId) {
+    public void addLike(@PathVariable @Positive long id, @PathVariable @Positive long userId) {
         filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void deleteLike(@PathVariable long id, @PathVariable long userId) {
+    public void deleteLike(@PathVariable @Positive long id, @PathVariable @Positive long userId) {
         filmService.deleteLike(id, userId);
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") @Positive int count) {
         return filmService.getPopularFilms(count);
     }
 
