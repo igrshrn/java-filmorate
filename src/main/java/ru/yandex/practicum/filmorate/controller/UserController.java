@@ -55,6 +55,11 @@ public class UserController {
     public void addFriend(@PathVariable @Positive long id, @PathVariable @Positive long friendId) {
         userService.addFriend(id, friendId);
     }
+    
+    @PutMapping("/{id}/friends/{friendId}/confirm")
+    public void confirmFriend(@PathVariable @Positive long id, @PathVariable @Positive long friendId) {
+        userService.confirmFriend(id, friendId);
+    }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public void deleteFriend(@PathVariable @Positive long id, @PathVariable @Positive long friendId) {

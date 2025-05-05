@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Positive;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import ru.yandex.practicum.filmorate.model.enums.Genre;
+import ru.yandex.practicum.filmorate.model.enums.MpaRating;
 import ru.yandex.practicum.filmorate.utils.validator.film.ValidFilm;
 
 import java.time.LocalDate;
@@ -36,6 +38,12 @@ public class Film {
     @Builder.Default
     private Set<Long> likes = new HashSet<>();
 
+    @NotNull(message = "Жанры не могут быть пустыми")
+    private Set<Genre> genres;
+
+    @NotNull(message = "Рейтинг MPA не может быть пустым")
+    private MpaRating mpa;
+
     @JsonCreator
     public Film(
             @JsonProperty("id") long id,
@@ -43,13 +51,17 @@ public class Film {
             @JsonProperty("description") String description,
             @JsonProperty("releaseDate") LocalDate releaseDate,
             @JsonProperty("duration") Integer duration,
-            @JsonProperty("likes") Set<Long> likes) {
+            @JsonProperty("likes") Set<Long> likes,
+            @JsonProperty("genres") Set<Genre> genres,
+            @JsonProperty("mpa") MpaRating mpa) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
+        this.mpa = mpa;
         this.likes = likes != null ? likes : new HashSet<>();
+        this.genres = genres != null ? genres : new HashSet<>();
     }
 
 }

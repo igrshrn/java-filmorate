@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,11 +54,26 @@ public class UserService {
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(friendId);
 
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
+        user.getFriends().put(friendId, FriendshipStatus.UNCONFIRMED);
+        friend.getFriends().put(userId, FriendshipStatus.UNCONFIRMED);
 
         userStorage.update(user);
         userStorage.update(friend);
+    }
+
+    public void confirmFriend(long userId, long friendId) {
+        User user = userStorage.getUserById(userId);
+        User friend = userStorage.getUserById(friendId);
+
+        if (user.getFriends().containsKey(friendId) && friend.getFriends().containsKey(userId)) {
+            user.getFriends().put(friendId, FriendshipStatus.CONFIRMED);
+            friend.getFriends().put(userId, FriendshipStatus.CONFIRMED);
+
+            userStorage.update(user);
+            userStorage.update(friend);
+        } else {
+            throw new NotFoundException("Запрос на дружбу не найден");
+        }
     }
 
     public void deleteFriend(long userId, long friendId) {
@@ -74,7 +90,8 @@ public class UserService {
     public Collection<User> getFriends(long userId) {
         User user = userStorage.getUserById(userId);
 
-        return user.getFriends().stream()
+        return user.getFriends().keySet().stream()
+                .filter(friendId -> user.getFriends().get(friendId) == FriendshipStatus.CONFIRMED)
                 .map(userStorage::getUserById)
                 .collect(Collectors.toList());
     }
@@ -83,8 +100,8 @@ public class UserService {
         User user = userStorage.getUserById(userId);
         User otherUser = userStorage.getUserById(otherId);
 
-        Set<Long> commonFriendsIds = new HashSet<>(user.getFriends());
-        commonFriendsIds.retainAll(otherUser.getFriends());
+        Set<Long> commonFriendsIds = new HashSet<>(user.getFriends().keySet());
+        commonFriendsIds.retainAll(otherUser.getFriends().keySet());
 
         return commonFriendsIds.stream()
                 .map(userStorage::getUserById)
