@@ -91,7 +91,7 @@ public class UserService {
         User user = userStorage.getUserById(userId);
 
         return user.getFriends().keySet().stream()
-                .filter(friendId -> user.getFriends().get(friendId) == FriendshipStatus.CONFIRMED)
+                .filter(friendId -> user.getFriends().get(friendId) == FriendshipStatus.UNCONFIRMED)
                 .map(userStorage::getUserById)
                 .collect(Collectors.toList());
     }

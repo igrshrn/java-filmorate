@@ -1,10 +1,13 @@
 package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.model.enums.Genre;
+import ru.yandex.practicum.filmorate.model.enums.MpaRating;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,6 +19,8 @@ class FilmTest extends AbstractValidationTest<Film> {
                 .description("Description")
                 .releaseDate(LocalDate.of(2023, 1, 1))
                 .duration(120)
+                .mpa(MpaRating.G)
+                .genres(Set.of(Genre.COMEDY, Genre.ACTION))
                 .build();
 
         assertTrue(validator.validate(film).isEmpty());

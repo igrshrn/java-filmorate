@@ -3,17 +3,20 @@ package ru.yandex.practicum.filmorate.controller;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.MpaRating;
+import ru.yandex.practicum.filmorate.utils.HttpMethodEnum;
+import ru.yandex.practicum.filmorate.utils.RandomUtils;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +29,9 @@ public class FilmControllerTest extends AbstractControllerTest {
                 "name", film.getName(),
                 "releaseDate", film.getReleaseDate().toString(),
                 "duration", film.getDuration(),
-                "description", film.getDescription()
+                "description", film.getDescription(),
+                "genres", film.getGenres().stream().map(Enum::name).collect(Collectors.toSet()),
+                "mpa", film.getMpa().name()
         );
     }
 
@@ -34,10 +39,7 @@ public class FilmControllerTest extends AbstractControllerTest {
     public void testCreateFilm() throws Exception {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
-
-        mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        performRequest(HttpMethodEnum.POST, "/films", json)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(film.getName()))
                 .andExpect(jsonPath("$.duration").value(film.getDuration()))
@@ -48,15 +50,10 @@ public class FilmControllerTest extends AbstractControllerTest {
     void testFilmAlreadyExistsException() throws Exception {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
-
-        mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        performRequest(HttpMethodEnum.POST, "/films", json)
                 .andExpect(status().isOk());
 
-        mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createJson(filmToMap(film))))
+        performRequest(HttpMethodEnum.POST, "/films", json)
                 .andExpect(status().isConflict());
     }
 
@@ -65,27 +62,29 @@ public class FilmControllerTest extends AbstractControllerTest {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
 
-        String response = mockMvc.perform(post("/films")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json)).andReturn().getResponse().getContentAsString();
+        String response = performRequest(HttpMethodEnum.POST, "/films", json)
+                .andReturn().getResponse().getContentAsString();
 
         long id = objectMapper.readTree(response).get("id").asLong();
 
+        MpaRating mpaRating = RandomUtils.getRandomRating();
         String updateJson = createJson(Map.of(
                 "id", id,
                 "name", "Updated Film",
                 "releaseDate", "2025-04-10",
                 "duration", 110,
-                "description", "Updated Description"
+                "description", "Updated Description",
+                "genres", RandomUtils.getRandomGenres(),
+                "mpa", mpaRating
         ));
 
-        mockMvc.perform(put("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson))
+        performRequest(HttpMethodEnum.PUT, "/films", updateJson)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Film"))
                 .andExpect(jsonPath("$.duration").value(110))
-                .andExpect(jsonPath("$.description").value("Updated Description"));
+                .andExpect(jsonPath("$.description").value("Updated Description"))
+                .andExpect(jsonPath("$.genres").isArray())
+                .andExpect(jsonPath("$.mpa").value(mpaRating.toString()));
     }
 
     @Test
@@ -94,9 +93,7 @@ public class FilmControllerTest extends AbstractControllerTest {
         film.setId(1);
         String json = createJson(filmToMap(film));
 
-        mockMvc.perform(put("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        performRequest(HttpMethodEnum.PUT, "/films", json)
                 .andExpect(status().isNotFound());
     }
 
@@ -106,12 +103,10 @@ public class FilmControllerTest extends AbstractControllerTest {
 
         for (int i = 0; i < count; i++) {
             String json = createJson(filmToMap(randomUtils.getFilm()));
-            mockMvc.perform(post("/films")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json));
+            performRequest(HttpMethodEnum.POST, "/films", json);
         }
 
-        mockMvc.perform(get("/films").contentType(MediaType.APPLICATION_JSON))
+        performRequest(HttpMethodEnum.GET, "/films")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(count)));
     }
@@ -121,19 +116,17 @@ public class FilmControllerTest extends AbstractControllerTest {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
 
-        String response = mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        String response = performRequest(HttpMethodEnum.POST, "/films", json)
                 .andReturn().getResponse().getContentAsString();
 
         long id = objectMapper.readTree(response).get("id").asLong();
-
-        mockMvc.perform(get("/films/{id}", id)
-                        .contentType(MediaType.APPLICATION_JSON))
+        performRequest(HttpMethodEnum.GET, "/films/{id}", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.name").value(film.getName()))
-                .andExpect(jsonPath("$.duration").value(film.getDuration()));
+                .andExpect(jsonPath("$.duration").value(film.getDuration()))
+                .andExpect(jsonPath("$.genres").isArray())
+                .andExpect(jsonPath("$.mpa").value(film.getMpa().name()));
     }
 
     @Test
@@ -141,17 +134,15 @@ public class FilmControllerTest extends AbstractControllerTest {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
 
-        String response = mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        String response = performRequest(HttpMethodEnum.POST, "/films", json)
                 .andReturn().getResponse().getContentAsString();
 
         long id = objectMapper.readTree(response).get("id").asLong();
 
-        mockMvc.perform(delete("/films/{id}", id))
+        performRequest(HttpMethodEnum.DELETE, "/films/{id}", id)
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/films/{id}", id))
+        performRequest(HttpMethodEnum.GET, "/films/{id}", id)
                 .andExpect(status().isNotFound());
     }
 
@@ -160,9 +151,7 @@ public class FilmControllerTest extends AbstractControllerTest {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
 
-        String response = mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        String response = performRequest(HttpMethodEnum.POST, "/films", json)
                 .andReturn().getResponse().getContentAsString();
 
         User user = randomUtils.getUser();
@@ -172,19 +161,18 @@ public class FilmControllerTest extends AbstractControllerTest {
                 "name", user.getName(),
                 "birthday", user.getBirthday().toString()
         ));
-        String responseUser = mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonUser))
+
+        String responseUser = performRequest(HttpMethodEnum.POST, "/users", jsonUser)
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
         long filmId = objectMapper.readTree(response).get("id").asLong();
         long userId = objectMapper.readTree(responseUser).get("id").asLong();
 
-        mockMvc.perform(put("/films/{id}/like/{userId}", filmId, userId))
+        performRequest(HttpMethodEnum.PUT, "/films/{id}/like/{userId}", filmId, userId)
                 .andExpect(status().isOk());
 
-        String filmResponse = mockMvc.perform(get("/films/{id}", filmId))
+        String filmResponse = performRequest(HttpMethodEnum.GET, "/films/{id}", filmId)
                 .andReturn().getResponse().getContentAsString();
 
         List<Integer> likesArray = JsonPath.read(filmResponse, "$.likes");
@@ -200,9 +188,7 @@ public class FilmControllerTest extends AbstractControllerTest {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
 
-        String response = mockMvc.perform(post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+        String response = performRequest(HttpMethodEnum.POST, "/films", json)
                 .andReturn().getResponse().getContentAsString();
 
         User user = randomUtils.getUser();
@@ -212,22 +198,21 @@ public class FilmControllerTest extends AbstractControllerTest {
                 "name", user.getName(),
                 "birthday", user.getBirthday().toString()
         ));
-        String responseUser = mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonUser))
+
+        String responseUser = performRequest(HttpMethodEnum.POST, "/users", jsonUser)
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
         long filmId = objectMapper.readTree(response).get("id").asLong();
         long userId = objectMapper.readTree(responseUser).get("id").asLong();
 
-        mockMvc.perform(put("/films/{id}/like/{userId}", filmId, userId))
+        performRequest(HttpMethodEnum.PUT, "/films/{id}/like/{userId}", filmId, userId)
                 .andExpect(status().isOk());
 
-        mockMvc.perform(delete("/films/{id}/like/{userId}", filmId, userId))
+        performRequest(HttpMethodEnum.DELETE, "/films/{id}/like/{userId}", filmId, userId)
                 .andExpect(status().isOk());
 
-        String filmResponse = mockMvc.perform(get("/films/{id}", filmId))
+        String filmResponse = performRequest(HttpMethodEnum.GET, "/films/{id}", filmId)
                 .andReturn().getResponse().getContentAsString();
 
         List<Integer> likesArray = JsonPath.read(filmResponse, "$.likes");
@@ -241,16 +226,17 @@ public class FilmControllerTest extends AbstractControllerTest {
     @Test
     void getPopularFilms() throws Exception {
         int count = randomUtils.getRandomNumber(8);
+
         for (int i = 0; i < count; i++) {
             Film film = randomUtils.getFilm();
             String json = createJson(filmToMap(film));
-            mockMvc.perform(post("/films")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json));
+            performRequest(HttpMethodEnum.POST, "/films", json);
         }
 
-        mockMvc.perform(get("/films/popular")
-                        .param("count", String.valueOf(count)))
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("count", String.valueOf(count));
+
+        performRequest(HttpMethodEnum.GET, "/films/popular", params)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(count)));
     }

@@ -2,9 +2,14 @@ package ru.yandex.practicum.filmorate.utils;
 
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.Genre;
+import ru.yandex.practicum.filmorate.model.enums.MpaRating;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 public class RandomUtils {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -25,7 +30,31 @@ public class RandomUtils {
                 .description(getWord(50))
                 .releaseDate(getRandomDate())
                 .duration(getRandomDuration())
+                .genres(getRandomGenres())
+                .mpa(getRandomRating())
                 .build();
+    }
+
+    public static MpaRating getRandomRating() {
+        MpaRating[] ratings = MpaRating.values();
+        int randomIndex = RANDOM.nextInt(ratings.length);
+
+        return ratings[randomIndex];
+    }
+
+    public static Set<Genre> getRandomGenres() {
+        Set<Genre> genres = EnumSet.allOf(Genre.class);
+
+        int numberOfGenres = RANDOM.nextInt(genres.size()) + 1;
+
+        Set<Genre> randomGenres = new HashSet<>();
+
+        while (randomGenres.size() < numberOfGenres) {
+            Genre randomGenre = genres.stream().skip(RANDOM.nextInt(genres.size())).findFirst().orElse(null);
+            randomGenres.add(randomGenre);
+        }
+
+        return randomGenres;
     }
 
     public int getRandomNumber(int number) {

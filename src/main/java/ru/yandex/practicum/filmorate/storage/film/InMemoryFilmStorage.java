@@ -21,8 +21,10 @@ public class InMemoryFilmStorage implements FilmStorage {
         if (films.values().stream().anyMatch(f -> f.equals(film))) {
             throw new AlreadyExistsException("Фильм с такими данными уже существует");
         }
+
         film.setId(id++);
         films.put(film.getId(), film);
+        System.out.println(film);
         return film;
     }
 
