@@ -11,17 +11,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class MpaControllerTest extends AbstractControllerTest{
+class MpaControllerTest extends AbstractControllerTest {
 
     @Test
-    void getAll() throws Exception{
+    void getAll() throws Exception {
         performRequest(HttpMethodEnum.GET, "/mpa")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(5)));
     }
 
     @Test
-    void getById() throws Exception{
+    void getById() throws Exception {
         performRequest(HttpMethodEnum.GET, "/mpa/1")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
