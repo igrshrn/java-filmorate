@@ -2,16 +2,13 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.UserFriendDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,10 +25,12 @@ public class UserService {
     }
 
     public User update(User user) {
+        this.getUserById(user.getId());
         return userStorage.update(user);
     }
 
     public void delete(long id) {
+        this.getUserById(id);
         userStorage.delete(id);
     }
 
@@ -40,7 +39,8 @@ public class UserService {
     }
 
     public User getUserById(long id) {
-        return userStorage.getUserById(id);
+        return userStorage.getUserById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + id + " не найден"));
     }
 
     public User login(String email) {
@@ -51,60 +51,39 @@ public class UserService {
     }
 
     public void addFriend(long userId, long friendId) {
-        User user = userStorage.getUserById(userId);
-        User friend = userStorage.getUserById(friendId);
-
-        user.getFriends().put(friendId, FriendshipStatus.UNCONFIRMED);
-        friend.getFriends().put(userId, FriendshipStatus.UNCONFIRMED);
-
-        userStorage.update(user);
-        userStorage.update(friend);
+        this.getUserById(userId);
+        this.getUserById(friendId);
+        userStorage.addFriend(userId, friendId);
+        log.info("Пользователь с ID {} отправил запрос на дружбу пользователяю с ID {} ", userId, friendId);
     }
 
     public void confirmFriend(long userId, long friendId) {
-        User user = userStorage.getUserById(userId);
-        User friend = userStorage.getUserById(friendId);
-
-        if (user.getFriends().containsKey(friendId) && friend.getFriends().containsKey(userId)) {
-            user.getFriends().put(friendId, FriendshipStatus.CONFIRMED);
-            friend.getFriends().put(userId, FriendshipStatus.CONFIRMED);
-
-            userStorage.update(user);
-            userStorage.update(friend);
-        } else {
-            throw new NotFoundException("Запрос на дружбу не найден");
-        }
+        userStorage.confirmFriend(userId, friendId);
+        log.info("Пользователь с ID {} подтвердил дружбу с пользователем с ID {} ", userId, friendId);
     }
 
     public void deleteFriend(long userId, long friendId) {
-        User user = userStorage.getUserById(userId);
-        User friend = userStorage.getUserById(friendId);
+        this.getUserById(userId);
+        this.getUserById(friendId);
 
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
-
-        userStorage.update(user);
-        userStorage.update(friend);
+        if (this.checkRelationship(userId, friendId)) {
+            userStorage.deleteFriend(userId, friendId);
+            log.info("Пользователь с ID {} удалил дружбу с пользователем с ID {} ", userId, friendId);
+        }
     }
 
-    public Collection<User> getFriends(long userId) {
-        User user = userStorage.getUserById(userId);
-
-        return user.getFriends().keySet().stream()
-                .filter(friendId -> user.getFriends().get(friendId) == FriendshipStatus.UNCONFIRMED)
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
+    public boolean checkRelationship(long userId, long friendId) {
+        return userStorage.checkRelationship(userId, friendId);
     }
 
-    public Collection<User> getCommonFriends(long userId, long otherId) {
-        User user = userStorage.getUserById(userId);
-        User otherUser = userStorage.getUserById(otherId);
+    public Collection<UserFriendDto> getFriends(long userId) {
+        this.getUserById(userId);
+        return userStorage.getFriends(userId);
+    }
 
-        Set<Long> commonFriendsIds = new HashSet<>(user.getFriends().keySet());
-        commonFriendsIds.retainAll(otherUser.getFriends().keySet());
-
-        return commonFriendsIds.stream()
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
+    public Collection<UserFriendDto> getCommonFriends(long userId, long otherId) {
+        userStorage.getUserById(userId);
+        userStorage.getUserById(otherId);
+        return userStorage.getCommonFriends(userId, otherId);
     }
 }

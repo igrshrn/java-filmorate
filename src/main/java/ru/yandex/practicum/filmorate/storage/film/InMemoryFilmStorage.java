@@ -2,13 +2,12 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.AlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Repository
@@ -24,7 +23,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
         film.setId(id++);
         films.put(film.getId(), film);
-        System.out.println(film);
+
         return film;
     }
 
@@ -40,9 +39,9 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilmById(long id) {
+    public Optional<Film> getFilmById(long id) {
         if (films.containsKey(id)) {
-            return films.get(id);
+            return Optional.ofNullable(films.get(id));
         } else {
             throw new NotFoundException("Фильм с id " + id + " не найден");
         }
@@ -61,4 +60,21 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new NotFoundException("Фильм с id " + id + " не найден");
         }
     }
+
+    @Override
+    public Collection<FilmDto> getPopularFilms(int count) {
+        return List.of();
+    }
+
+    @Override
+    public void addLike(long filmId, long userId) {
+
+    }
+
+    @Override
+    public void removeLike(long filmId, long userId) {
+
+    }
+
+
 }

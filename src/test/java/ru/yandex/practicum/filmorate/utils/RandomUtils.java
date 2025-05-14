@@ -1,19 +1,36 @@
 package ru.yandex.practicum.filmorate.utils;
 
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.enums.Genre;
-import ru.yandex.practicum.filmorate.model.enums.MpaRating;
 
 import java.time.LocalDate;
-import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
 public class RandomUtils {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final Random RANDOM = new Random();
+
+    private static final List<Mpa> MPA = List.of(
+            Mpa.builder().id(1L).name("G").build(),
+            Mpa.builder().id(2L).name("PG").build(),
+            Mpa.builder().id(3L).name("PG-13").build(),
+            Mpa.builder().id(4L).name("R").build(),
+            Mpa.builder().id(5L).name("NC-17").build()
+    );
+
+    private static final List<Genre> GENRES = List.of(
+            Genre.builder().id(1L).name("Комедия").build(),
+            Genre.builder().id(2L).name("Драма").build(),
+            Genre.builder().id(3L).name("Мультфильм").build(),
+            Genre.builder().id(4L).name("Триллер").build(),
+            Genre.builder().id(5L).name("Документальный").build(),
+            Genre.builder().id(6L).name("Боевик").build()
+    );
 
     public User getUser() {
         return User.builder()
@@ -31,26 +48,20 @@ public class RandomUtils {
                 .releaseDate(getRandomDate())
                 .duration(getRandomDuration())
                 .genres(getRandomGenres())
-                .mpa(getRandomRating())
+                .mpa(getRandomMpa())
                 .build();
     }
 
-    public static MpaRating getRandomRating() {
-        MpaRating[] ratings = MpaRating.values();
-        int randomIndex = RANDOM.nextInt(ratings.length);
-
-        return ratings[randomIndex];
+    public Mpa getRandomMpa() {
+        return MPA.get(RANDOM.nextInt(MPA.size()));
     }
 
-    public static Set<Genre> getRandomGenres() {
-        Set<Genre> genres = EnumSet.allOf(Genre.class);
-
-        int numberOfGenres = RANDOM.nextInt(genres.size()) + 1;
-
+    public Set<Genre> getRandomGenres() {
+        int numberOfGenres = RANDOM.nextInt(GENRES.size()) + 1;
         Set<Genre> randomGenres = new HashSet<>();
 
         while (randomGenres.size() < numberOfGenres) {
-            Genre randomGenre = genres.stream().skip(RANDOM.nextInt(genres.size())).findFirst().orElse(null);
+            Genre randomGenre = GENRES.get(RANDOM.nextInt(GENRES.size()));
             randomGenres.add(randomGenre);
         }
 
@@ -94,5 +105,4 @@ public class RandomUtils {
         }
         return result.toString();
     }
-
 }

@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
-import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.utils.validator.user.ValidUser;
 
 import java.time.LocalDate;
@@ -33,7 +32,7 @@ public class User {
     private LocalDate birthday;
 
     @Builder.Default
-    private Map<Long, FriendshipStatus> friends = new HashMap<>();
+    private Map<Long, Boolean> friends = new HashMap<>();
 
     @JsonCreator
     public User(
@@ -42,7 +41,7 @@ public class User {
             @JsonProperty("login") String login,
             @JsonProperty("name") String name,
             @JsonProperty("birthday") LocalDate birthday,
-            @JsonProperty("friends") Map<Long, FriendshipStatus> friends) {
+            @JsonProperty("friends") Map<Long, Boolean> friends) {
         this.id = id;
         this.email = email;
         this.login = login;

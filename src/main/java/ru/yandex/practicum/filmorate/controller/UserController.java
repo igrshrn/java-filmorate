@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.UserFriendDto;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -67,13 +68,12 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public Collection<User> getFriends(@PathVariable @Positive long id) {
+    public Collection<UserFriendDto> getFriends(@PathVariable @Positive long id) {
         return userService.getFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<User> getCommonFriends(@PathVariable @Positive long id, @PathVariable @Positive long otherId) {
+    public Collection<UserFriendDto> getCommonFriends(@PathVariable @Positive long id, @PathVariable @Positive long otherId) {
         return userService.getCommonFriends(id, otherId);
     }
-
 }

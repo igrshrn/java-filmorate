@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,17 +40,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
         log.error("Constraint violation error: {}", ex.getMessage());
-        Map<String, String> message = Map.of("error", ex.getMessage());
-
-        ErrorResponse response = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .message(message)
-                .path(request.getRequestURI())
-                .build();
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return getErrorResponseResponseEntity(ex, request);
     }
 
     @ExceptionHandler(NotFoundException.class)
@@ -83,4 +74,31 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(DataIntegrityException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(RuntimeException ex, HttpServletRequest request) {
+        log.error("Data integrity error: {}", ex.getMessage());
+        return getErrorResponseResponseEntity(ex, request);
+    }
+    @ExceptionHandler(InternalServerException.class)
+    public ResponseEntity<ErrorResponse> handleInternalServer(RuntimeException ex, HttpServletRequest request) {
+        log.error("Internal server error: {}", ex.getMessage());
+        return getErrorResponseResponseEntity(ex, request);
+    }
+
+    @NotNull
+    private ResponseEntity<ErrorResponse> getErrorResponseResponseEntity(RuntimeException ex, HttpServletRequest request) {
+        Map<String, String> message = Map.of("error", ex.getMessage());
+
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(message)
+                .path(request.getRequestURI())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
 }

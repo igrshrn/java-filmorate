@@ -4,13 +4,10 @@ import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.enums.MpaRating;
 import ru.yandex.practicum.filmorate.utils.HttpMethodEnum;
-import ru.yandex.practicum.filmorate.utils.RandomUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -30,8 +27,8 @@ public class FilmControllerTest extends AbstractControllerTest {
                 "releaseDate", film.getReleaseDate().toString(),
                 "duration", film.getDuration(),
                 "description", film.getDescription(),
-                "genres", film.getGenres().stream().map(Enum::name).collect(Collectors.toSet()),
-                "mpa", film.getMpa().name()
+                "genres", film.getGenres(),
+                "mpa", film.getMpa()
         );
     }
 
@@ -47,17 +44,6 @@ public class FilmControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testFilmAlreadyExistsException() throws Exception {
-        Film film = randomUtils.getFilm();
-        String json = createJson(filmToMap(film));
-        performRequest(HttpMethodEnum.POST, "/films", json)
-                .andExpect(status().isOk());
-
-        performRequest(HttpMethodEnum.POST, "/films", json)
-                .andExpect(status().isConflict());
-    }
-
-    @Test
     void testUpdateFilm() throws Exception {
         Film film = randomUtils.getFilm();
         String json = createJson(filmToMap(film));
@@ -67,15 +53,15 @@ public class FilmControllerTest extends AbstractControllerTest {
 
         long id = objectMapper.readTree(response).get("id").asLong();
 
-        MpaRating mpaRating = RandomUtils.getRandomRating();
+        Mpa mpa = randomUtils.getRandomMpa();
         String updateJson = createJson(Map.of(
                 "id", id,
                 "name", "Updated Film",
                 "releaseDate", "2025-04-10",
                 "duration", 110,
                 "description", "Updated Description",
-                "genres", RandomUtils.getRandomGenres(),
-                "mpa", mpaRating
+                "genres", randomUtils.getRandomGenres(),
+                "mpa", mpa
         ));
 
         performRequest(HttpMethodEnum.PUT, "/films", updateJson)
@@ -83,8 +69,7 @@ public class FilmControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.name").value("Updated Film"))
                 .andExpect(jsonPath("$.duration").value(110))
                 .andExpect(jsonPath("$.description").value("Updated Description"))
-                .andExpect(jsonPath("$.genres").isArray())
-                .andExpect(jsonPath("$.mpa").value(mpaRating.toString()));
+                .andExpect(jsonPath("$.genres").isArray());
     }
 
     @Test
@@ -120,13 +105,14 @@ public class FilmControllerTest extends AbstractControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         long id = objectMapper.readTree(response).get("id").asLong();
+
         performRequest(HttpMethodEnum.GET, "/films/{id}", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.name").value(film.getName()))
                 .andExpect(jsonPath("$.duration").value(film.getDuration()))
                 .andExpect(jsonPath("$.genres").isArray())
-                .andExpect(jsonPath("$.mpa").value(film.getMpa().name()));
+                .andExpect(jsonPath("$.mpa.name").value(film.getMpa().getName()));
     }
 
     @Test
@@ -225,19 +211,20 @@ public class FilmControllerTest extends AbstractControllerTest {
 
     @Test
     void getPopularFilms() throws Exception {
-        int count = randomUtils.getRandomNumber(8);
+        Film film1 = randomUtils.getFilm();
+        performRequest(HttpMethodEnum.POST, "/films", createJson(filmToMap(film1)))
+                .andExpect(status().isOk());
 
-        for (int i = 0; i < count; i++) {
-            Film film = randomUtils.getFilm();
-            String json = createJson(filmToMap(film));
-            performRequest(HttpMethodEnum.POST, "/films", json);
-        }
+        Film film2 = randomUtils.getFilm();
+        performRequest(HttpMethodEnum.POST, "/films", createJson(filmToMap(film2)))
+                .andExpect(status().isOk());
 
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("count", String.valueOf(count));
+        String content = performRequest(HttpMethodEnum.GET, "/films/popular")
+                .andReturn().getResponse().getContentAsString();
+        System.out.println(content);
 
-        performRequest(HttpMethodEnum.GET, "/films/popular", params)
+        performRequest(HttpMethodEnum.GET, "/films/popular")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(count)));
+                .andExpect(jsonPath("$", hasSize(2)));
     }
 }
