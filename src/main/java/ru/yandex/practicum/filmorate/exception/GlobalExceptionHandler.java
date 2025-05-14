@@ -80,6 +80,7 @@ public class GlobalExceptionHandler {
         log.error("Data integrity error: {}", ex.getMessage());
         return getErrorResponseResponseEntity(ex, request);
     }
+
     @ExceptionHandler(InternalServerException.class)
     public ResponseEntity<ErrorResponse> handleInternalServer(RuntimeException ex, HttpServletRequest request) {
         log.error("Internal server error: {}", ex.getMessage());

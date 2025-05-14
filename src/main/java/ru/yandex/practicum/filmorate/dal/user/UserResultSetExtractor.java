@@ -19,6 +19,7 @@ public class UserResultSetExtractor implements ResultSetExtractor<Map<Long, User
     public UserResultSetExtractor(UserRowMapper mapper) {
         this.mapper = mapper;
     }
+
     @Override
     public Map<Long, User> extractData(ResultSet rs) throws SQLException, DataAccessException {
         Map<Long, User> users = new HashMap<>();
