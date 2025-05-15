@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -27,7 +28,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) {
+    public FilmDto update(@Valid @RequestBody Film film) {
         return filmService.update(film);
     }
 
@@ -57,7 +58,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopularFilms(@RequestParam(defaultValue = "10") @Positive int count) {
+    public Collection<FilmDto> getPopularFilms(@RequestParam(defaultValue = "10") @Positive int count) {
         return filmService.getPopularFilms(count);
     }
 

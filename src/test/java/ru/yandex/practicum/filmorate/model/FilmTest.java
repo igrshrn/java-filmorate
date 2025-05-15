@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,8 @@ class FilmTest extends AbstractValidationTest<Film> {
                 .description("Description")
                 .releaseDate(LocalDate.of(2023, 1, 1))
                 .duration(120)
+                .mpa(Mpa.builder().build())
+                .genres(HashSet.newHashSet(1))
                 .build();
 
         assertTrue(validator.validate(film).isEmpty());
