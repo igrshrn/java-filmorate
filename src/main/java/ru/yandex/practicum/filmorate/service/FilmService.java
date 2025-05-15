@@ -31,8 +31,8 @@ public class FilmService {
     }
 
     public Film create(Film film) {
-        Set<Long> genres = film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet());
-        genres.forEach(genreService::getById);
+        Set<Long> genreIds = film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet());
+        genreService.getByIds(genreIds);
 
         mpaService.getById(film.getMpa().getId());
         return filmStorage.create(film);

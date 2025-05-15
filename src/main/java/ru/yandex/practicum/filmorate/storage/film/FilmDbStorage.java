@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Primary
@@ -224,9 +225,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         if (film.getGenres() == null) {
             return;
         }
-        for (var genre : film.getGenres()) {
-            insert(INSERT_GENRE, film.getId(), genre.getId());
-            log.info("Добавлен жанр {} к фильму: {}", genre.getId(), film.getId());
-        }
+        List<Object[]> batch = film.getGenres().stream()
+                .map(genre -> new Object[]{film.getId(), genre.getId()})
+                .collect(Collectors.toList());
+
+        jdbc.batchUpdate(INSERT_GENRE, batch, batch.size(), (ps, args) -> {
+            ps.setLong(1, (Long) args[0]);
+            ps.setLong(2, (Long) args[1]);
+        });
+
+        batch.forEach(args -> log.info("Добавлен жанр {} к фильму: {}", args[1], args[0]));
     }
 }

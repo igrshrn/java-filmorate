@@ -8,8 +8,8 @@ import ru.yandex.practicum.filmorate.dal.genre.GenreResultSetExtractor;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Primary
 @Slf4j
@@ -30,5 +30,23 @@ public class GenreDbStorage extends BaseRepository<Genre> implements GenreStorag
     @Override
     public Optional<Genre> getById(long id) {
         return findOne(FIND_BY_ID_QUERY, id);
+    }
+
+    @Override
+    public Optional<List<Genre>> getGenresByIds(Set<Long> ids) {
+        if (ids.isEmpty()) {
+            return Optional.of(List.of());
+        }
+
+        String inClause = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String query = "SELECT * FROM genres WHERE id IN (" + inClause + ")";
+
+        Map<Long, Genre> genreMap = jdbc.query(query, extractor, ids.toArray(new Long[0]));
+
+        if (genreMap.size() != ids.size()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new ArrayList<>(genreMap.values()));
     }
 }
