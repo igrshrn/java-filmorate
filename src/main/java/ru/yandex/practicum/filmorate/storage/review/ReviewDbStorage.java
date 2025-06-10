@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,10 +23,11 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     private static final String FIND_ALL = "SELECT * FROM reviews LIMIT ?";
     private static final String FIND_BY_FILM_ID = "SELECT * FROM reviews WHERE film_id = ? LIMIT ?";
     private static final String DELETE = "DELETE FROM reviews WHERE review_id = ?";
-    private static final String ADD_LIKE = "UPDATE reviews SET useful = useful + 1 WHERE review_id = ?";
-    private static final String ADD_DISLIKE = "UPDATE reviews SET useful = useful - 1 WHERE review_id = ?";
-    private static final String REMOVE_LIKE = "UPDATE reviews SET useful = useful - 1 WHERE review_id = ?";
-    private static final String REMOVE_DISLIKE = "UPDATE reviews SET useful = useful + 1 WHERE review_id = ?";
+
+    private static final String CHECK_VOTE = "SELECT is_like FROM review_votes WHERE review_id = ? AND user_id = ?";
+    private static final String UPDATE_VOTE = "UPDATE review_votes SET is_like = ? WHERE review_id = ? AND user_id = ?";
+    private static final String INSERT_VOTE = "INSERT INTO review_votes (review_id, user_id, is_like) VALUES (?, ?, ?)";
+    private static final String DELETE_VOTE = "DELETE FROM review_votes WHERE review_id = ? AND user_id = ?";
 
     public ReviewDbStorage(JdbcTemplate jdbc, ResultSetExtractor<Map<Long, Review>> extractor) {
         super(jdbc, extractor);
@@ -33,7 +35,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     @Override
     public Review create(Review review) {
-        long id = insert(INSERT, review.getContent(), review.isPositive(), review.getUserId(), review.getFilmId(), review.getUseful());
+        long id = insert(INSERT, review.getContent(), review.getIsPositive(), review.getUserId(), review.getFilmId(), review.getUseful());
         review.setReviewId(id);
         return review;
     }
@@ -42,7 +44,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     public Review update(Review review) {
         System.out.println("update:");
         System.out.println(review);
-        update(UPDATE, review.getContent(), review.isPositive(), review.getUserId(), review.getFilmId(), review.getUseful(), review.getReviewId());
+        update(UPDATE, review.getContent(), review.getIsPositive(), review.getUserId(), review.getFilmId(), review.getUseful(), review.getReviewId());
         return review;
     }
 
@@ -68,21 +70,52 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     @Override
     public void addLike(long reviewId, long userId) {
-        update(ADD_LIKE, reviewId);
+        handleVote(reviewId, userId, true);
     }
 
     @Override
     public void addDislike(long reviewId, long userId) {
-        update(ADD_DISLIKE, reviewId);
+        handleVote(reviewId, userId, false);
     }
 
     @Override
     public void removeLike(long reviewId, long userId) {
-        update(REMOVE_LIKE, reviewId);
+        handleVoteRemoval(reviewId, userId, true);
     }
 
     @Override
     public void removeDislike(long reviewId, long userId) {
-        update(REMOVE_DISLIKE, reviewId);
+        handleVoteRemoval(reviewId, userId, false);
+    }
+
+    private void handleVote(long reviewId, long userId, boolean isLike) {
+        List<Boolean> existingVotes = jdbc.query(CHECK_VOTE, (rs, rowNum) -> rs.getBoolean("is_like"), reviewId, userId);
+
+        if (!existingVotes.isEmpty()) {
+            boolean existingVote = existingVotes.getFirst();
+            if (existingVote != isLike) {
+                // Если пользователь меняет голос, обновляем счетчик на 2
+                updateReviewUseful(reviewId, isLike ? 2 : -2);
+            }
+            // Обновляем запись о голосовании
+            jdbc.update(UPDATE_VOTE, isLike, reviewId, userId);
+        } else {
+            // Если записи нет, обновляем счетчик на 1
+            updateReviewUseful(reviewId, isLike ? 1 : -1);
+            // Добавляем новую запись о голосовании
+            jdbc.update(INSERT_VOTE, reviewId, userId, isLike);
+        }
+    }
+
+    private void handleVoteRemoval(long reviewId, long userId, boolean wasLike) {
+        // Удаляем запись о голосовании
+        jdbc.update(DELETE_VOTE, reviewId, userId);
+        // Обновляем счетчик на -1 или +1 в зависимости от типа удаляемого голоса
+        updateReviewUseful(reviewId, wasLike ? -1 : 1);
+    }
+
+    private void updateReviewUseful(long reviewId, int delta) {
+        String updateUsefulQuery = "UPDATE reviews SET useful = useful + ? WHERE review_id = ?";
+        jdbc.update(updateUsefulQuery, delta, reviewId);
     }
 }

@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,14 +17,30 @@ public class Review {
 
     @NotNull(message = "Тип отзыва не может быть пустым")
     @JsonProperty("isPositive")
-    private boolean isPositive;
+    private Boolean isPositive;
 
     @NotNull(message = "ID пользователя не может быть пустым")
-    private long userId;
+    private Long userId;
 
     @NotNull(message = "ID фильма не может быть пустым")
-    private long filmId;
+    private Long filmId;
 
     @Builder.Default
     private int useful = 0;
+
+    @JsonCreator
+    public Review(
+            @JsonProperty("reviewId") long reviewId,
+            @JsonProperty("content") String content,
+            @JsonProperty("isPositive") Boolean isPositive,
+            @JsonProperty("userId") Long userId,
+            @JsonProperty("filmId") Long filmId,
+            @JsonProperty("useful") int useful) {
+        this.reviewId = reviewId;
+        this.content = content;
+        this.isPositive = isPositive;
+        this.userId = userId;
+        this.filmId = filmId;
+        this.useful = useful;
+    }
 }

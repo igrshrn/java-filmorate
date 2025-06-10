@@ -62,3 +62,13 @@ CREATE TABLE IF NOT EXISTS reviews
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (film_id) REFERENCES films (id)
 );
+
+CREATE TABLE IF NOT EXISTS review_votes
+(
+    review_id BIGINT  NOT NULL,
+    user_id   BIGINT  NOT NULL,
+    is_like   BOOLEAN NOT NULL,
+    PRIMARY KEY (review_id, user_id),
+    FOREIGN KEY (review_id) REFERENCES reviews (review_id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);

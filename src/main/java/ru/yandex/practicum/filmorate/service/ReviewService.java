@@ -24,6 +24,9 @@ public class ReviewService {
     }
 
     public Review create(Review review) {
+        if (review.getIsPositive() == null) {
+            throw new IllegalArgumentException("Тип отзыва не может быть пустым");
+        }
         userService.getUserById(review.getUserId());
         filmService.getFilmById(review.getFilmId());
         Review createdReview = reviewStorage.create(review);
