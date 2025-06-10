@@ -29,23 +29,23 @@ class DirectorControllerTest {
     @Autowired
     private final JdbcTemplate jdbcTemplate;
 
-    private Director director_1;
-    private Director director_2;
+    private Director director1;
+    private Director director2;
 
     @BeforeEach
     void setUp() {
         jdbcTemplate.update("DELETE from directors");
         jdbcTemplate.update("ALTER TABLE directors ALTER COLUMN id RESTART WITH 1");
-        director_1 = Director.builder()
+        director1 = Director.builder()
                 .name("Квентин Тарантино").build();
-        director_2 = Director.builder()
+        director2 = Director.builder()
                 .name("Гай Ричи").build();
     }
 
     @Test
     void testCreateDirectorsAndGetAll() {
-        directorDbStorage.create(director_1);
-        directorDbStorage.create(director_2);
+        directorDbStorage.create(director1);
+        directorDbStorage.create(director2);
         List<Director> allDirectors = directorDbStorage.getAll();
 
         assertEquals(2, allDirectors.size());
@@ -53,7 +53,7 @@ class DirectorControllerTest {
 
     @Test
     void getByID() {
-        directorDbStorage.create(director_1);
+        directorDbStorage.create(director1);
         Optional<Director> director = directorDbStorage.getDirectorById(1L);
         if (director.isPresent()) {
             assertEquals(1, director.get().getId());
