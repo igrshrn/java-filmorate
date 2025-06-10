@@ -53,7 +53,7 @@ public class FilmResultSetExtractor implements ResultSetExtractor<Map<Long, Film
             }
 
             Long directorId = rs.getObject("director_id", Long.class);
-            if (genreId != null && genreId != 0) {
+            if (directorId != null && directorId != 0) {
                 film.getDirectors().add(Director.builder()
                         .id(directorId)
                         .name(rs.getString("director_name"))
