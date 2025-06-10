@@ -39,7 +39,7 @@ class ReviewControllerTest extends AbstractControllerTest {
     private Map<String, Object> reviewToMap(Review review) {
         return Map.of(
                 "content", review.getContent(),
-                "isPositive", review.isPositive(),
+                "isPositive", review.getIsPositive(),
                 "userId", review.getUserId(),
                 "filmId", review.getFilmId()
         );
@@ -78,7 +78,7 @@ class ReviewControllerTest extends AbstractControllerTest {
         performRequest(HttpMethodEnum.POST, "/reviews", json)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value(review.getContent()))
-                .andExpect(jsonPath("$.isPositive").value(review.isPositive()));
+                .andExpect(jsonPath("$.isPositive").value(review.getIsPositive()));
     }
 
     @Test
