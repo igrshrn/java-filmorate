@@ -6,10 +6,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.film.FilmResultSetExtractor;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
+import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -20,8 +23,11 @@ import java.util.stream.Collectors;
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
-    public FilmDbStorage(JdbcTemplate jdbc, FilmResultSetExtractor extractor) {
+    private final DirectorDbStorage directorDbStorage;
+    public FilmDbStorage(JdbcTemplate jdbc, FilmResultSetExtractor extractor, DirectorDbStorage directorDbStorage) {
         super(jdbc, extractor);
+        this.directorDbStorage = directorDbStorage;
+
         log.info("FilmResultSetExtractor initialized: {}", extractor != null);
     }
 
@@ -79,10 +85,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String DELETE_FILM = "DELETE FROM films WHERE id = ?";
     private static final String DELETE_GENRES = "DELETE FROM film_genres WHERE film_id = ?";
     private static final String INSERT_GENRE = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+
     private static final String INSERT_LIKE = "INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
     private static final String DELETE_LIKES = "DELETE FROM film_likes WHERE film_id = ?";
+
     private static final String DELETE_DIRECTOR = "DELETE FROM film_director WHERE film_id = ?";
+    private static final String INSERT_DIRECTOR = "INSERT INTO film_director (film_id, director_id) VALUES (?,?)";
 
     private static final String POPULAR_SUBQUERY = """
             SELECT f.id AS film_id, COUNT(fl.user_id) AS like_count
@@ -124,6 +133,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         );
         film.setId(id);
         insertGenres(film);
+        insertDirectors(film);
         log.info("Добавлен фильм: {}", film);
         return film;
     }
@@ -158,7 +168,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         delete(DELETE_LIKES, id);
         delete(DELETE_GENRES, id);
         delete(DELETE_FILM, id);
-        delete(DELETE_DIRECTOR, id);
+        //delete(DELETE_DIRECTOR, id);
         log.info("Удален фильм с ID {}", id);
     }
 
@@ -224,10 +234,39 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         update(DELETE_LIKE, filmId, userId);
     }
 
+//    @Override
+//    public Collection<Film> getSortedFilm(Long id, String sort) {
+//        Collection<Film> allFilms = findMany(FIND_ALL);
+//        directorDbStorage.getDirectorById(id).orElseThrow(() -> new NotFoundException("Указанный режисcер не найден"));
+//
+//
+//
+//
+//
+//        return List.of();
+//    }
+
     private void updateGenres(Film film) {
         update(DELETE_GENRES, film.getId());
         insertGenres(film);
     }
+
+    private void insertDirectors(Film film) {
+        if (film.getDirectors() == null) {
+            return;
+        }
+        List<Object[]> batch = film.getDirectors().stream()
+                .map(director -> new Object[]{film.getId(), director.getId()})
+                .collect(Collectors.toList());
+
+        jdbc.batchUpdate(INSERT_DIRECTOR, batch, batch.size(), (ps, args) -> {
+            ps.setLong(1, (Long) args[0]);
+            ps.setLong(2, (Long) args[1]);
+        });
+
+        batch.forEach(args -> log.info("Добавлен режиссер {} к фильму: {}", args[1], args[0]));
+    }
+
 
     private void insertGenres(Film film) {
         if (film.getGenres() == null) {

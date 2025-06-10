@@ -25,7 +25,6 @@ public class DirectorResultSetExtractor implements ResultSetExtractor<Map<Long, 
                     .name(name)
                     .build());
         }
-
         return directorMap;
     }
 }

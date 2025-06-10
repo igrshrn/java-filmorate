@@ -44,7 +44,8 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     @Override
     public Director create(Director director) {
-        insert(INSERT, director.getName());
+        long id = insert(INSERT, director.getName());
+        director.setId(id);
         return director;
     }
 

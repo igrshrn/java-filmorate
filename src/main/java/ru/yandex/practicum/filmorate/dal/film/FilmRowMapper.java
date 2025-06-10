@@ -26,6 +26,7 @@ public class FilmRowMapper implements RowMapper<Film>, Serializable {
                 .genres(new HashSet<>())
                 .likes(new HashSet<>())
                 .directors(new HashSet<>())
+                .directors(new HashSet<>())
                 .build();
     }
 }

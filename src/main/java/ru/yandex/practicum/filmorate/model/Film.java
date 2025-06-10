@@ -55,7 +55,7 @@ public class Film {
             @JsonProperty("likes") Set<Long> likes,
             @JsonProperty("genres") Set<Genre> genres,
             @JsonProperty("mpa") Mpa mpa,
-            @JsonProperty("director") Set<Director> directors) {
+            @JsonProperty("directors") Set<Director> directors) {
         this.id = id;
         this.name = name;
         this.description = description;

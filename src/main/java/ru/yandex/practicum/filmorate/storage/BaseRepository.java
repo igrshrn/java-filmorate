@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.yandex.practicum.filmorate.exception.DataIntegrityException;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -30,7 +31,7 @@ public abstract class BaseRepository<T> {
     protected void update(String query, Object... params) {
         int updated = jdbc.update(query, params);
         if (updated == 0) {
-            throw new InternalServerException("Не удалось обновить данные: " + query);
+            throw new NotFoundException("Не удалось обновить данные: " + query);
         }
     }
 
