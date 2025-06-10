@@ -60,7 +60,6 @@ public class FilmResultSetExtractor implements ResultSetExtractor<Map<Long, Film
                         .build());
             }
         }
-
         return filmMap;
     }
 }
