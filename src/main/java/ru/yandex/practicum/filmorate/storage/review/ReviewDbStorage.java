@@ -20,7 +20,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     private static final String INSERT = "INSERT INTO reviews (content, is_positive, user_id, film_id, useful) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE = "UPDATE reviews SET content = ?, is_positive = ?, user_id = ?, film_id = ?, useful = ? WHERE review_id = ?";
     private static final String FIND_BY_ID = "SELECT * FROM reviews WHERE review_id = ?";
-    private static final String FIND_ALL = "SELECT * FROM reviews LIMIT ? ORDER BY useful DESC";
+    private static final String FIND_ALL = "SELECT * FROM reviews ORDER BY useful DESC LIMIT ? ";
     private static final String FIND_BY_FILM_ID = "SELECT * FROM reviews WHERE film_id = ? ORDER BY useful DESC LIMIT ? ";
     private static final String DELETE = "DELETE FROM reviews WHERE review_id = ?";
 
