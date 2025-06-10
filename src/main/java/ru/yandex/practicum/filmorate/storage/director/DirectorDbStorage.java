@@ -19,6 +19,7 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
     private static final String DELETE_DIRECTOR = "DELETE FROM directors WHERE id = ?";
     private static final String DELETE_DIRECTOR_FROM_FILM = "DELETE FROM film_director WHERE director_id = ?";
     private static final String INSERT = "INSERT INTO directors (name) VALUES (?)";
+    private static final String UPDATE = "UPDATE directors SET name = ? WHERE id = ?";
 
     public DirectorDbStorage(JdbcTemplate jdbc, DirectorResultSetExtractor extractor) {
         super(jdbc, extractor);
@@ -37,21 +38,19 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     @Override
     public void delete(Long id) {
-        update(DELETE_DIRECTOR, id);
-        update(DELETE_DIRECTOR_FROM_FILM, id);
+        delete(DELETE_DIRECTOR, id);
+        delete(DELETE_DIRECTOR_FROM_FILM, id);
     }
-
-
-
 
     @Override
     public Director create(Director director) {
-        return null;
+        insert(INSERT, director.getName());
+        return director;
     }
 
     @Override
     public Director update(Director director) {
-        return null;
+        update(UPDATE, director.getName(), director.getId());
+        return director;
     }
-
 }

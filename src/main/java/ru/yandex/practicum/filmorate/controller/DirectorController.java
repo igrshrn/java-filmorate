@@ -1,4 +1,50 @@
 package ru.yandex.practicum.filmorate.controller;
 
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.service.DirectorService;
+
+import java.util.Collection;
+
+@Validated
+@RestController
+@RequestMapping("/directors")
 public class DirectorController {
+
+    private final DirectorService directorService;
+
+    @Autowired
+    public DirectorController(DirectorService directorService) {
+        this.directorService = directorService;
+    }
+
+    @GetMapping
+    public Collection<Director> getAll() {
+        return directorService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public Director getByID(@PathVariable @Positive Long id) {
+        return directorService.getByID(id);
+    }
+
+    @PostMapping
+    public Director create(@Valid @RequestBody Director director) {
+        return directorService.create(director);
+    }
+
+    @PutMapping
+    public Director update(@Valid @RequestBody Director director) {
+        return directorService.update(director);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable @Positive Long id) {
+        directorService.delete(id);
+    }
 }
