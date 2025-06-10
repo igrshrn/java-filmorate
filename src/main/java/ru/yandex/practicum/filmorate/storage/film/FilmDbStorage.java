@@ -35,13 +35,19 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             m.name AS mpa_name,
             g.id AS genre_id,
             g.name AS genre_name,
-            fl.user_id AS like_user_id""";
+            fl.user_id AS like_user_id,
+            d.id AS director_id,
+            d.name AS director_name
+            """;
 
     private static final String FILM_JOIN = """
             JOIN mpa m ON f.mpa_id = m.id
             LEFT JOIN film_genres fg ON f.id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.id
-            LEFT JOIN film_likes fl ON f.id = fl.film_id""";
+            LEFT JOIN film_likes fl ON f.id = fl.film_id
+            LEFT JOIN film_director fd ON f.id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.id
+            """;
 
     private static final String BASE_SELECT = """
             SELECT %s
@@ -76,6 +82,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String INSERT_LIKE = "INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
     private static final String DELETE_LIKES = "DELETE FROM film_likes WHERE film_id = ?";
+    private static final String DELETE_DIRECTOR = "DELETE FROM film_directors WHERE film_id = ?";
 
     private static final String POPULAR_SUBQUERY = """
             SELECT f.id AS film_id, COUNT(fl.user_id) AS like_count
@@ -151,6 +158,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         delete(DELETE_LIKES, id);
         delete(DELETE_GENRES, id);
         delete(DELETE_FILM, id);
+        delete(DELETE_DIRECTOR, id);
         log.info("Удален фильм с ID {}", id);
     }
 

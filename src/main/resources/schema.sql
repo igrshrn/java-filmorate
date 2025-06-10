@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS genres
     name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS director
+CREATE TABLE IF NOT EXISTS directors
 (
     id   BIGINT PRIMARY KEY,
     name VARCHAR(50) NOT NULL
@@ -60,6 +60,6 @@ CREATE TABLE IF NOT EXISTS film_genres
 CREATE TABLE IF NOT EXISTS film_director
 (
     film_id  BIGINT REFERENCES films (id),
-    director_id BIGINT REFERENCES director (id),
+    director_id BIGINT REFERENCES directors (id),
     PRIMARY KEY (film_id, director_id)
 );
