@@ -72,8 +72,7 @@ class ReviewDbStorageTest {
 
         assertThat(optionalReview)
                 .isPresent()
-                .hasValueSatisfying(r ->
-                {
+                .hasValueSatisfying(r -> {
                     assertThat(r).hasFieldOrPropertyWithValue("reviewId", review.getReviewId());
                     assertThat(r).hasFieldOrPropertyWithValue("content", review.getContent());
                 });
