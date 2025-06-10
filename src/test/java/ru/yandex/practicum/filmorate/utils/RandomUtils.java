@@ -57,7 +57,7 @@ public class RandomUtils {
         int numberOfGenres = RANDOM.nextInt(GENRES.size()) + 1;
         Set<Genre> randomGenres = new HashSet<>();
 
-        while (randomGenres.size() < numberOfGenres) {
+        while (randomGenres.size() < 1) {
             Genre randomGenre = GENRES.get(RANDOM.nextInt(GENRES.size()));
             randomGenres.add(randomGenre);
         }
