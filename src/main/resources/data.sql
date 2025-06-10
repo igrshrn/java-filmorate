@@ -1,6 +1,7 @@
 DELETE FROM film_likes;
 DELETE FROM friends;
 DELETE FROM film_genres;
+DELETE FROM review_votes;
 DELETE FROM reviews;
 DELETE FROM users;
 DELETE FROM films;

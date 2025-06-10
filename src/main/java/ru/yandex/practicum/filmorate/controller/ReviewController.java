@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +21,12 @@ public class ReviewController {
     }
 
     @PostMapping
-    public Review create(@RequestBody Review review) {
+    public Review create(@Valid @RequestBody Review review) {
         return reviewService.create(review);
     }
 
     @PutMapping
-    public Review update(@RequestBody Review review) {
+    public Review update(@Valid @RequestBody Review review) {
         return reviewService.update(review);
     }
 
