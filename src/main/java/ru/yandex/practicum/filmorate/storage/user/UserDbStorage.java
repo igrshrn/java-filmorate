@@ -39,6 +39,7 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     private static final String INSERT_FRIEND = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)";
     private static final String UPDATE_FRIEND_STATUS = "UPDATE friends SET status = ? WHERE user_id = ? AND friend_id = ?";
     private static final String DELETE_FRIEND = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+    private static final String DELETE_FRIEND_BY_ID = "DELETE FROM friends WHERE user_id = ? OR friend_id = ?";
 
     private static final String FIND_BY_EMAIL = "SELECT * FROM users WHERE email = ?";
     private static final String FIND_COMMON_FRIENDS = """
@@ -120,7 +121,8 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
     @Override
     public void delete(long id) {
-        update(DELETE_USER, id);
+        delete(DELETE_FRIEND_BY_ID, id, id);
+        delete(DELETE_USER, id);
     }
 
     @Override

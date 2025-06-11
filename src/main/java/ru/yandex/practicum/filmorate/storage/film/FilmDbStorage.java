@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
-import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -22,11 +21,8 @@ import java.util.stream.Collectors;
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
-    private final DirectorDbStorage directorDbStorage;
-
-    public FilmDbStorage(JdbcTemplate jdbc, FilmResultSetExtractor extractor, DirectorDbStorage directorDbStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, FilmResultSetExtractor extractor) {
         super(jdbc, extractor);
-        this.directorDbStorage = directorDbStorage;
         log.info("FilmResultSetExtractor initialized: {}", extractor != null);
     }
 
@@ -203,55 +199,53 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
 
         jdbc.query(FIND_POPULAR, (rs) -> {
-            while (rs.next()) {
 
-                long filmId = rs.getLong("film_id");
-                FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
-                    try {
-                        return FilmDto.builder()
-                                .id(rs.getLong("film_id"))
-                                .name(rs.getString("film_name"))
-                                .description(rs.getString("film_description"))
-                                .releaseDate(rs.getDate("film_release_date").toLocalDate())
-                                .duration(rs.getInt("film_duration"))
-                                .mpa(Mpa.builder().build())
-                                .genres(new HashSet<>())
-                                .likes(new HashSet<>())
-                                .likesCount(rs.getLong("like_count"))
-                                .build();
-                    } catch (SQLException e) {
-                        throw new RuntimeException("Ошибка маппинга", e);
-                    }
-                });
-                film.setMpa(Mpa.builder()
-                        .id(rs.getLong("mpa_id"))
-                        .name(rs.getString("mpa_name"))
+            long filmId = rs.getLong("film_id");
+            FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
+                try {
+                    return FilmDto.builder()
+                            .id(rs.getLong("film_id"))
+                            .name(rs.getString("film_name"))
+                            .description(rs.getString("film_description"))
+                            .releaseDate(rs.getDate("film_release_date").toLocalDate())
+                            .duration(rs.getInt("film_duration"))
+                            .mpa(Mpa.builder().build())
+                            .genres(new HashSet<>())
+                            .likes(new HashSet<>())
+                            .likesCount(rs.getLong("like_count"))
+                            .build();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Ошибка маппинга", e);
+                }
+            });
+            film.setMpa(Mpa.builder()
+                    .id(rs.getLong("mpa_id"))
+                    .name(rs.getString("mpa_name"))
+                    .build());
+
+            Long genreId = rs.getObject("genre_id", Long.class);
+            if (genreId != null && genreId != 0) {
+                film.getGenres().add(Genre.builder()
+                        .id(genreId)
+                        .name(rs.getString("genre_name"))
                         .build());
+            }
 
-                Long genreId = rs.getObject("genre_id", Long.class);
-                if (genreId != null && genreId != 0) {
-                    film.getGenres().add(Genre.builder()
-                            .id(genreId)
-                            .name(rs.getString("genre_name"))
-                            .build());
-                }
+            Long userId = rs.getObject("user_id", Long.class);
+            if (userId != null && userId != 0) {
+                film.getLikes().add(userId);
+            }
+            Long likeCount = rs.getObject("like_count", Long.class);
+            if (likeCount != null && likeCount != 0) {
+                film.getLikes().add(userId);
+            }
 
-                Long userId = rs.getObject("user_id", Long.class);
-                if (userId != null && userId != 0) {
-                    film.getLikes().add(userId);
-                }
-                Long likeCount = rs.getObject("like_count", Long.class);
-                if (likeCount != null && likeCount != 0) {
-                    film.getLikes().add(userId);
-                }
-
-                Long directorId = rs.getObject("director_id", Long.class);
-                if (directorId != null && directorId != 0) {
-                    film.getDirectors().add(Director.builder()
-                            .id(directorId)
-                            .name(rs.getString("director_name"))
-                            .build());
-                }
+            Long directorId = rs.getObject("director_id", Long.class);
+            if (directorId != null && directorId != 0) {
+                film.getDirectors().add(Director.builder()
+                        .id(directorId)
+                        .name(rs.getString("director_name"))
+                        .build());
             }
         }, count);
 
@@ -270,13 +264,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public Collection<Film> getSortedFilm(Long id, String sort) {
-            String orderByClause = buildOrderByClause(sort);
-            String sql = FIND_BY_DIRECTOR_ID;
-            if (orderByClause != null) {
-                sql += " ORDER BY " + orderByClause;
-            }
-            return findMany(sql, id);
+        String orderByClause = buildOrderByClause(sort);
+        String sql = FIND_BY_DIRECTOR_ID;
+        if (orderByClause != null) {
+            sql += " ORDER BY " + orderByClause;
         }
+        return findMany(sql, id);
+    }
 
     private String buildOrderByClause(String sort) {
         if (sort == null || sort.isEmpty()) {
