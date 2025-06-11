@@ -1,3 +1,4 @@
+DELETE FROM events;
 DELETE FROM film_likes;
 DELETE FROM friends;
 DELETE FROM film_genres;

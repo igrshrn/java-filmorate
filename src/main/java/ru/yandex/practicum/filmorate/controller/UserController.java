@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.UserFriendDto;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
+import java.util.List;
 
 @Validated
 @RestController
@@ -75,5 +77,10 @@ public class UserController {
     @GetMapping("/{id}/friends/common/{otherId}")
     public Collection<UserFriendDto> getCommonFriends(@PathVariable @Positive long id, @PathVariable @Positive long otherId) {
         return userService.getCommonFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Event> getFeed(@PathVariable @Positive long id) {
+        return userService.getFeed(id);
     }
 }
