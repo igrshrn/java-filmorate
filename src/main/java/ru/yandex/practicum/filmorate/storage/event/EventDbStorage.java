@@ -24,14 +24,14 @@ public class EventDbStorage implements EventStorage  {
 
     @Override
     public List<Event> getFeed(long userId) {
-        String sql = "SELECT * FROM events WHERE user_id =? ORDER BY timestamp DESC";
+        String sql = "SELECT * FROM events WHERE user_id =? ORDER BY timestamp ASC";
         return jdbcTemplate.query(sql, this::mapRowToEvent, userId);
     }
 
     private Event mapRowToEvent(ResultSet rs, int rowNum) throws SQLException {
         return Event.builder()
                 .eventId(rs.getLong("event_id"))
-                .timeStamp(rs.getTimestamp("timestamp").getTime())
+                .timestamp(rs.getTimestamp("timestamp").getTime())
                 .userId(rs.getLong("user_id"))
                 .eventType(Event.EventType.valueOf(rs.getString("event_type")))
                 .operation(Event.Operation.valueOf(rs.getString("operation")))

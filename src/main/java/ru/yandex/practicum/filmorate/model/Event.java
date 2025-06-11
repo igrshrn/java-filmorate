@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class Event {
     private long eventId;
-    private long timeStamp;
+    private long timestamp;
     private long userId;
     private EventType eventType;
     private Operation operation;
