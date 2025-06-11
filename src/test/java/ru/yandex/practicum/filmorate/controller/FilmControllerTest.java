@@ -208,7 +208,7 @@ public class FilmControllerTest extends AbstractControllerTest {
 
         assertThat(likes).doesNotContain(userId);
     }
-  
+
     @Test
     void getPopularFilms() throws Exception {
         Film film1 = randomUtils.getFilm();
