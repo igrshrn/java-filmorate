@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
@@ -75,4 +77,11 @@ public class FilmService {
     public Collection<FilmDto> getPopularFilms(int count) {
         return filmStorage.getPopularFilms(count);
     }
+
+    //Recommendations
+
+    public Collection<FilmDto> getRecommendedFilms(long id) {
+        return filmStorage.getRecommendedFilms(id);
+    }
+
 }

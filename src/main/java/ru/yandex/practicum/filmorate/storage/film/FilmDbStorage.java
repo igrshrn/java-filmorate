@@ -106,6 +106,26 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LEFT JOIN film_likes fl ON f.id = fl.film_id
             ORDER BY l.like_count DESC""".formatted(POPULAR_SUBQUERY);
 
+    private static final String GET_RECOMMENDED_FILMS_QUERY = "SELECT * FROM films f " +
+            "JOIN mpa m ON f.mpa_id = m.id " +
+            "WHERE f.id IN (" +
+            "SELECT film_id FROM film_likes " +
+            "WHERE user_id IN (" +
+            "SELECT fl1.user_id FROM film_likes fl1 " +
+            "RIGHT JOIN film_likes fl2 ON fl2.film_id = fl1.film_id " +
+            "GROUP BY fl1.user_id, fl2.user_id " +
+            "HAVING fl1.user_id IS NOT NULL AND " +
+            "fl1.user_id != ? AND " +
+            "fl2.user_id = ? " +
+            "ORDER BY COUNT(fl1.user_id) DESC " +
+            "LIMIT 3 " +
+            ") " +
+            "AND film_id NOT IN (" +
+            "SELECT film_id FROM film_likes " +
+            "WHERE user_id = ?" +
+            ")" +
+            ")";
+
     @Override
     public Film create(Film film) {
         long id = insert(INSERT,
@@ -236,4 +256,58 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         batch.forEach(args -> log.info("Добавлен жанр {} к фильму: {}", args[1], args[0]));
     }
+
+    //Recommendations
+
+    @Override
+    public Collection<FilmDto> getRecommendedFilms(long id) {
+        Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
+
+        jdbc.query(GET_RECOMMENDED_FILMS_QUERY, (rs) -> {
+            while (rs.next()) {
+
+                long filmId = rs.getLong("film_id");
+                FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
+                    try {
+                        return FilmDto.builder()
+                                .id(rs.getLong("film_id"))
+                                .name(rs.getString("film_name"))
+                                .description(rs.getString("film_description"))
+                                .releaseDate(rs.getDate("film_release_date").toLocalDate())
+                                .duration(rs.getInt("film_duration"))
+                                .mpa(Mpa.builder().build())
+                                .genres(new HashSet<>())
+                                .likes(new HashSet<>())
+                                .likesCount(rs.getLong("like_count"))
+                                .build();
+                    } catch (SQLException e) {
+                        throw new RuntimeException("Ошибка маппинга", e);
+                    }
+                });
+                film.setMpa(Mpa.builder()
+                        .id(rs.getLong("mpa_id"))
+                        .name(rs.getString("mpa_name"))
+                        .build());
+
+                Long genreId = rs.getObject("genre_id", Long.class);
+                if (genreId != null && genreId != 0) {
+                    film.getGenres().add(Genre.builder()
+                            .id(genreId)
+                            .name(rs.getString("genre_name"))
+                            .build());
+                }
+
+                Long userId = rs.getObject("user_id", Long.class);
+                if (userId != null && userId != 0) {
+                    film.getLikes().add(userId);
+                }
+                Long likeCount = rs.getObject("like_count", Long.class);
+                if (likeCount != null && likeCount != 0) {
+                    film.getLikes().add(userId);
+                }
+            }
+        }, id, id, id);
+        return filmMap.values();
+    }
+
 }
