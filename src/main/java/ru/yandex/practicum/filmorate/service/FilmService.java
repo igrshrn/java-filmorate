@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,13 +22,15 @@ public class FilmService {
     private final UserService userService;
     private final GenreService genreService;
     private final MpaService mpaService;
+    private final DirectorDbStorage directorDbStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService) {
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, DirectorDbStorage directorDbStorage) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.genreService = genreService;
         this.mpaService = mpaService;
+        this.directorDbStorage = directorDbStorage;
     }
 
     public Film create(Film film) {
@@ -77,6 +80,8 @@ public class FilmService {
     }
 
     public Collection<Film> getSortedFilm(Long id, String sort) {
+        directorDbStorage.getDirectorById(id)
+                .orElseThrow(() -> new NotFoundException("Режиссер с id=" + id + " не найден"));
         return filmStorage.getSortedFilm(id, sort);
     }
 }

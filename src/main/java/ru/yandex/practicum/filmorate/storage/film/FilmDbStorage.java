@@ -61,7 +61,30 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     private static final String FIND_ALL = BASE_SELECT;
     private static final String FIND_BY_ID = BASE_SELECT + " WHERE f.id = ?";
-    private static final String FIND_BY_DIRECTOR_ID = BASE_SELECT + "WHERE fd.director_id = ?";
+    private static final String FIND_BY_DIRECTOR_ID = """
+            SELECT f.id AS film_id,
+            f.name AS film_name,
+            f.description AS film_description,
+            f.release_date AS film_release_date,
+            f.duration AS film_duration,
+            f.mpa_id,
+            m.name AS mpa_name,
+            g.id AS genre_id,
+            g.name AS genre_name,
+            fl.user_id AS user_id,
+            d.id AS director_id,
+            d.name AS director_name,
+            COUNT(fl.user_id) AS like_count
+            FROM films f
+            LEFT JOIN film_likes fl ON f.id = fl.film_id
+            JOIN mpa m ON f.mpa_id = m.id
+            LEFT JOIN film_genres fg ON f.id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.id
+            LEFT JOIN film_director fd ON f.id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.id
+            WHERE f.id IN (
+            SELECT fd.film_id FROM film_director fd WHERE fd.director_id = ?)
+            GROUP BY f.id,fl.USER_ID""";
 
     private static final String INSERT = """
             INSERT INTO films (
@@ -235,47 +258,35 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public Collection<Film> getSortedFilm(Long id, String sort) {
-
-        directorDbStorage.getDirectorById(id)
-                .orElseThrow(() -> new NotFoundException("Режиссер с id=" + id + " не найден"));
-
-        Collection<Film> films = findMany(FIND_BY_DIRECTOR_ID, id);
-
-        if (sort != null && !sort.isEmpty()) {
-            String[] sortParams = sort.split(",");
-
-            Comparator<Film> comparator = null;
-
-            for (String param : sortParams) {
-                switch (param.trim().toLowerCase()) {
-                    case "year":
-                        Comparator<Film> byYear = Comparator.comparing(
-                                Film::getReleaseDate,
-                                Comparator.nullsLast(Comparator.naturalOrder())
-                        );
-                        comparator = comparator == null ? byYear : comparator.thenComparing(byYear);
-                        break;
-
-                    case "likes":
-                        Comparator<Film> byLikes = Comparator.comparing(
-                                film -> film.getLikes().size(),
-                                Comparator.reverseOrder()
-                        );
-                        comparator = comparator == null ? byLikes : comparator.thenComparing(byLikes);
-                        break;
-
-                    default:
-                        break;
-                }
+            String orderByClause = buildOrderByClause(sort);
+            String sql = FIND_BY_DIRECTOR_ID;
+            if (orderByClause != null) {
+                sql += " ORDER BY " + orderByClause;
             }
+            return findMany(sql, id);
+        }
 
-            if (comparator != null) {
-                films = films.stream()
-                        .sorted(comparator)
-                        .collect(Collectors.toList());
+    private String buildOrderByClause(String sort) {
+        if (sort == null || sort.isEmpty()) {
+            return null;
+        }
+
+        String[] sortParams = sort.split(",");
+        List<String> orderBy = new ArrayList<>();
+
+        for (String param : sortParams) {
+            switch (param.trim().toLowerCase()) {
+                case "year":
+                    orderBy.add("f.release_date ASC");
+                    break;
+                case "likes":
+                    orderBy.add("like_count DESC");
+                    break;
+                default:
+                    break;
             }
         }
-        return films;
+        return orderBy.isEmpty() ? null : String.join(", ", orderBy);
     }
 
     private void updateGenres(Film film) {
