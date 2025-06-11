@@ -50,3 +50,13 @@ CREATE TABLE IF NOT EXISTS film_genres
     genre_id BIGINT REFERENCES genres (id),
     PRIMARY KEY (film_id, genre_id)
 );
+
+CREATE TABLE IF NOT EXISTS events (
+    event_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id BIGINT NOT NULL,
+    event_type VARCHAR(10) NOT NULL,
+    operation VARCHAR(10) NOT NULL,
+    entity_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
