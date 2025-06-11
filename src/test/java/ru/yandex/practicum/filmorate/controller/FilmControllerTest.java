@@ -208,4 +208,22 @@ public class FilmControllerTest extends AbstractControllerTest {
 
         assertThat(likes).doesNotContain(userId);
     }
+  
+    @Test
+    void getPopularFilms() throws Exception {
+        Film film1 = randomUtils.getFilm();
+        performRequest(HttpMethodEnum.POST, "/films", createJson(filmToMap(film1)))
+                .andExpect(status().isOk());
+
+        Film film2 = randomUtils.getFilm();
+        performRequest(HttpMethodEnum.POST, "/films", createJson(filmToMap(film2)))
+                .andExpect(status().isOk());
+
+        String content = performRequest(HttpMethodEnum.GET, "/films/popular")
+                .andReturn().getResponse().getContentAsString();
+        System.out.println(content);
+
+        performRequest(HttpMethodEnum.GET, "/films/popular")
+                .andExpect(status().isOk());
+    }
 }

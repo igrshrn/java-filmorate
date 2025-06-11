@@ -263,4 +263,61 @@ class ReviewControllerTest extends AbstractControllerTest {
         performRequest(HttpMethodEnum.GET, "/reviews/{id}", reviewId)
                 .andExpect(jsonPath("$.useful").value(0));
     }
+
+    @Test
+    void createReviewShouldAddEventToFeed() throws Exception {
+        long filmId = createFilm();
+        long userId = createUser();
+
+        Review review = randomUtils.getReview(filmId, userId);
+        String json = createJson(reviewToMap(review));
+
+        performRequest(HttpMethodEnum.POST, "/reviews", json)
+                .andExpect(status().isOk());
+
+        performRequest(HttpMethodEnum.GET, "/users/" + userId + "/feed")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].eventType").value("REVIEW"))
+                .andExpect(jsonPath("$[0].operation").value("ADD"))
+                .andExpect(jsonPath("$[0].userId").value(userId))
+                .andExpect(jsonPath("$[0].entityId").isNumber());
+    }
+
+    @Test
+    void updateReviewShouldAddEventToFeed() throws Exception {
+        long filmId = createFilm();
+        long userId = createUser();
+
+        Review review = randomUtils.getReview(filmId, userId);
+        String json = createJson(reviewToMap(review));
+
+        String response = performRequest(HttpMethodEnum.POST, "/reviews", json)
+                .andReturn().getResponse().getContentAsString();
+
+        long reviewId = getIdByresponse(response, "reviewId");
+        long useful = getIdByresponse(response, "useful");
+
+        String updateJson = createJson(Map.of(
+                "reviewId", reviewId,
+                "content", "Updated Content",
+                "isPositive", true,
+                "userId", userId,
+                "filmId", filmId,
+                "useful", useful
+        ));
+
+        performRequest(HttpMethodEnum.PUT, "/reviews", updateJson)
+                .andExpect(status().isOk());
+
+        performRequest(HttpMethodEnum.GET, "/users/" + userId + "/feed")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].eventType").value("REVIEW"))
+                .andExpect(jsonPath("$[0].operation").value("ADD"))
+                .andExpect(jsonPath("$[1].eventType").value("REVIEW"))
+                .andExpect(jsonPath("$[1].operation").value("UPDATE"))
+                .andExpect(jsonPath("$[1].userId").value(userId))
+                .andExpect(jsonPath("$[1].entityId").value(reviewId));
+    }
 }

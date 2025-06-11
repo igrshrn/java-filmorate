@@ -84,4 +84,13 @@ CREATE TABLE IF NOT EXISTS film_director
     film_id  BIGINT REFERENCES films (id) ON DELETE CASCADE,
     director_id BIGINT REFERENCES directors (id) ON DELETE CASCADE,
     PRIMARY KEY (film_id, director_id)
+
+CREATE TABLE IF NOT EXISTS events (
+    event_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id BIGINT NOT NULL,
+    event_type VARCHAR(10) NOT NULL,
+    operation VARCHAR(10) NOT NULL,
+    entity_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
