@@ -14,7 +14,13 @@ public class EventService {
         this.eventStorage = eventStorage;
     }
 
-    public void addEvent(Event event) {
+    public void addEvent(long userId, Event.EventType eventType, Event.Operation operation, long entityId) {
+        Event event = Event.builder()
+                .userId(userId)
+                .eventType(eventType)
+                .operation(operation)
+                .entityId(entityId)
+                .build();
         eventStorage.addEvent(event);
     }
 

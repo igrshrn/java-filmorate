@@ -66,12 +66,7 @@ public class FilmService {
         userService.getUserById(userId);
         filmStorage.addLike(filmId, userId);
         log.info("Пользователь с id {} поставил лайк фильму с id {}", userId, filmId);
-        eventService.addEvent(Event.builder()
-                .userId(userId)
-                .eventType(Event.EventType.LIKE)
-                .operation(Event.Operation.ADD)
-                .entityId(filmId)
-                .build());
+        eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.ADD, filmId);
     }
 
     public void deleteLike(long filmId, long userId) {
@@ -79,12 +74,7 @@ public class FilmService {
         userService.getUserById(userId);
         filmStorage.removeLike(filmId, userId);
         log.info("Пользователь с id {} удалил лайк с фильма с id {}", userId, filmId);
-        eventService.addEvent(Event.builder()
-                .userId(userId)
-                .eventType(Event.EventType.LIKE)
-                .operation(Event.Operation.REMOVE)
-                .entityId(filmId)
-                .build());
+        eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.REMOVE, filmId);
     }
 
     public Collection<FilmDto> getPopularFilms(int count) {

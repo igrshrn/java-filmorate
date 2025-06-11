@@ -34,12 +34,7 @@ public class ReviewService {
         filmService.getFilmById(review.getFilmId());
         Review createdReview = reviewStorage.create(review);
         log.info("Создан новый отзыв: {}", createdReview);
-        eventService.addEvent(Event.builder()
-                .userId(review.getUserId())
-                .eventType(Event.EventType.REVIEW)
-                .operation(Event.Operation.ADD)
-                .entityId(createdReview.getReviewId())
-                .build());
+        eventService.addEvent(review.getUserId(), Event.EventType.REVIEW, Event.Operation.ADD, createdReview.getReviewId());
         return createdReview;
     }
 
@@ -47,12 +42,7 @@ public class ReviewService {
         getReviewById(review.getReviewId());
         Review updatedReview = reviewStorage.update(review);
         log.info("Отзыв обновлен: {}", updatedReview);
-        eventService.addEvent(Event.builder()
-                .userId(review.getUserId())
-                .eventType(Event.EventType.REVIEW)
-                .operation(Event.Operation.UPDATE)
-                .entityId(review.getReviewId())
-                .build());
+        eventService.addEvent(review.getUserId(), Event.EventType.REVIEW, Event.Operation.UPDATE, review.getReviewId());
         return updatedReview;
     }
 
@@ -87,12 +77,7 @@ public class ReviewService {
         Review review = getReviewById(id);
         reviewStorage.delete(id);
         log.info("Удален отзыв с ID: {}", id);
-        eventService.addEvent(Event.builder()
-                .userId(review.getUserId())
-                .eventType(Event.EventType.REVIEW)
-                .operation(Event.Operation.REMOVE)
-                .entityId(id)
-                .build());
+        eventService.addEvent(review.getUserId(), Event.EventType.REVIEW, Event.Operation.REMOVE, id);
     }
 
     public void addLike(long reviewId, long userId) {

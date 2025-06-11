@@ -59,12 +59,7 @@ public class UserService {
         this.getUserById(friendId);
         userStorage.addFriend(userId, friendId);
         log.info("Пользователь с ID {} отправил запрос на дружбу пользователяю с ID {} ", userId, friendId);
-        eventService.addEvent(Event.builder()
-                .userId(userId)
-                .eventType(Event.EventType.FRIEND)
-                .operation(Event.Operation.ADD)
-                .entityId(friendId)
-                .build());
+        eventService.addEvent(userId, Event.EventType.FRIEND, Event.Operation.ADD, friendId);
     }
 
     public void confirmFriend(long userId, long friendId) {
@@ -79,12 +74,7 @@ public class UserService {
         if (this.checkRelationship(userId, friendId)) {
             userStorage.deleteFriend(userId, friendId);
             log.info("Пользователь с ID {} удалил дружбу с пользователем с ID {} ", userId, friendId);
-            eventService.addEvent(Event.builder()
-                    .userId(userId)
-                    .eventType(Event.EventType.FRIEND)
-                    .operation(Event.Operation.REMOVE)
-                    .entityId(friendId)
-                    .build());
+            eventService.addEvent(userId, Event.EventType.FRIEND, Event.Operation.REMOVE, friendId);;
         }
     }
 
