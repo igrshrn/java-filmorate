@@ -37,6 +37,7 @@ public class DirectorService {
     }
 
     public Director update(Director director) {
+        this.getByID(director.getId());
         return directorStorage.update(director);
     }
 }

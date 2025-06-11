@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,16 +22,16 @@ public class FilmService {
     private final UserService userService;
     private final GenreService genreService;
     private final MpaService mpaService;
-    private final DirectorDbStorage directorDbStorage;
+    private final DirectorService directorService;
     private final EventService eventService;
 
       @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService,DirectorDbStorage directorDbStorage) {
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService,DirectorService directorService) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.genreService = genreService;
         this.mpaService = mpaService;
-        this.directorDbStorage = directorDbStorage;
+        this.directorService = directorService;
         this.eventService = eventService;
     }
 
@@ -85,8 +84,7 @@ public class FilmService {
     }
 
     public Collection<Film> getSortedFilm(Long id, String sort) {
-        directorDbStorage.getDirectorById(id)
-                .orElseThrow(() -> new NotFoundException("Режиссер с id=" + id + " не найден"));
+        directorService.getByID(id);
         return filmStorage.getSortedFilm(id, sort);
     }
 }
