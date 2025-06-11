@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.film.FilmResultSetExtractor;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -133,6 +134,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 g.id AS genre_id,
                 g.name AS genre_name,
                 fl.user_id AS like_user_id,
+                d.id AS director_id,
+                d.name AS director_name,
                 l.like_count
             FROM(%s) as l
             LEFT JOIN FILMS f on l.film_id = f.id
@@ -140,6 +143,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LEFT JOIN film_genres fg ON f.id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.id
             LEFT JOIN film_likes fl ON f.id = fl.film_id
+            LEFT JOIN film_director fd ON f.id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.id
             ORDER BY l.like_count DESC""".formatted(POPULAR_SUBQUERY);
 
     @Override
@@ -238,6 +243,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 Long likeCount = rs.getObject("like_count", Long.class);
                 if (likeCount != null && likeCount != 0) {
                     film.getLikes().add(userId);
+                }
+
+                Long directorId = rs.getObject("director_id", Long.class);
+                if (directorId != null && directorId != 0) {
+                    film.getDirectors().add(Director.builder()
+                            .id(directorId)
+                            .name(rs.getString("director_name"))
+                            .build());
                 }
             }
         }, count);

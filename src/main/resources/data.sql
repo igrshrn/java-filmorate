@@ -7,6 +7,8 @@ DELETE FROM users;
 DELETE FROM films;
 DELETE FROM mpa;
 DELETE FROM genres;
+DELETE from film_director;
+DELETE from directors;
 
 ALTER TABLE `users` ALTER COLUMN `id` RESTART WITH 1;
 ALTER TABLE `films` ALTER COLUMN `id` RESTART WITH 1;
@@ -31,6 +33,3 @@ VALUES
     ('PG-13'),
     ('R'),
     ('NC-17');
-
-DELETE from film_director;
-DELETE from directors;
