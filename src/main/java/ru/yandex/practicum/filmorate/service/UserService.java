@@ -74,7 +74,7 @@ public class UserService {
         if (this.checkRelationship(userId, friendId)) {
             userStorage.deleteFriend(userId, friendId);
             log.info("Пользователь с ID {} удалил дружбу с пользователем с ID {} ", userId, friendId);
-            eventService.addEvent(userId, Event.EventType.FRIEND, Event.Operation.REMOVE, friendId);;
+            eventService.addEvent(userId, Event.EventType.FRIEND, Event.Operation.REMOVE, friendId);
         }
     }
 
