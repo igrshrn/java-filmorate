@@ -30,7 +30,7 @@ public class EventDbStorage implements EventStorage {
 
     @Override
     public void deleteFeed(long userId) {
-        String sql = "DELETE events WHERE user_id = ? OR entity_id = ?";
+        String sql = "DELETE FROM events WHERE user_id = ? OR entity_id = ?";
         jdbcTemplate.update(sql, userId, userId);
     }
 
