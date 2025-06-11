@@ -23,6 +23,7 @@ public class GenreResultSetExtractor implements ResultSetExtractor<Map<Long, Gen
                     .name(name)
                     .build());
         }
+
         return genreMap;
     }
 }
