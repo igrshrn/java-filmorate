@@ -63,3 +63,24 @@ CREATE TABLE IF NOT EXISTS film_director
     director_id BIGINT REFERENCES directors (id) ON DELETE CASCADE,
     PRIMARY KEY (film_id, director_id)
 );
+CREATE TABLE IF NOT EXISTS reviews
+(
+    review_id   BIGINT PRIMARY KEY AUTO_INCREMENT,
+    content     VARCHAR(1000) NOT NULL,
+    is_positive BOOLEAN       NOT NULL,
+    user_id     BIGINT        NOT NULL,
+    film_id     BIGINT        NOT NULL,
+    useful      INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (film_id) REFERENCES films (id)
+);
+
+CREATE TABLE IF NOT EXISTS review_votes
+(
+    review_id BIGINT  NOT NULL,
+    user_id   BIGINT  NOT NULL,
+    is_like   BOOLEAN NOT NULL,
+    PRIMARY KEY (review_id, user_id),
+    FOREIGN KEY (review_id) REFERENCES reviews (review_id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
