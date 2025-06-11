@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.dal.director;
 
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;

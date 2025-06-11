@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.film.FilmResultSetExtractor;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -24,10 +23,10 @@ import java.util.stream.Collectors;
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     private final DirectorDbStorage directorDbStorage;
+
     public FilmDbStorage(JdbcTemplate jdbc, FilmResultSetExtractor extractor, DirectorDbStorage directorDbStorage) {
         super(jdbc, extractor);
         this.directorDbStorage = directorDbStorage;
-
         log.info("FilmResultSetExtractor initialized: {}", extractor != null);
     }
 
@@ -62,6 +61,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     private static final String FIND_ALL = BASE_SELECT;
     private static final String FIND_BY_ID = BASE_SELECT + " WHERE f.id = ?";
+    private static final String FIND_BY_DIRECTOR_ID = BASE_SELECT + "WHERE fd.director_id = ?";
 
     private static final String INSERT = """
             INSERT INTO films (
@@ -85,11 +85,9 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String DELETE_FILM = "DELETE FROM films WHERE id = ?";
     private static final String DELETE_GENRES = "DELETE FROM film_genres WHERE film_id = ?";
     private static final String INSERT_GENRE = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
-
     private static final String INSERT_LIKE = "INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
     private static final String DELETE_LIKES = "DELETE FROM film_likes WHERE film_id = ?";
-
     private static final String DELETE_DIRECTOR = "DELETE FROM film_director WHERE film_id = ?";
     private static final String INSERT_DIRECTOR = "INSERT INTO film_director (film_id, director_id) VALUES (?,?)";
 
@@ -149,6 +147,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 film.getId()
         );
         updateGenres(film);
+        insertDirectors(film);
         log.info("Обновлен фильм: {}", film);
         return film;
     }
@@ -168,7 +167,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         delete(DELETE_LIKES, id);
         delete(DELETE_GENRES, id);
         delete(DELETE_FILM, id);
-        //delete(DELETE_DIRECTOR, id);
+        delete(DELETE_DIRECTOR, id);
         log.info("Удален фильм с ID {}", id);
     }
 
@@ -234,17 +233,50 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         update(DELETE_LIKE, filmId, userId);
     }
 
-//    @Override
-//    public Collection<Film> getSortedFilm(Long id, String sort) {
-//        Collection<Film> allFilms = findMany(FIND_ALL);
-//        directorDbStorage.getDirectorById(id).orElseThrow(() -> new NotFoundException("Указанный режисcер не найден"));
-//
-//
-//
-//
-//
-//        return List.of();
-//    }
+    @Override
+    public Collection<Film> getSortedFilm(Long id, String sort) {
+
+        directorDbStorage.getDirectorById(id)
+                .orElseThrow(() -> new NotFoundException("Режиссер с id=" + id + " не найден"));
+
+        Collection<Film> films = findMany(FIND_BY_DIRECTOR_ID, id);
+
+        if (sort != null && !sort.isEmpty()) {
+            String[] sortParams = sort.split(",");
+
+            Comparator<Film> comparator = null;
+
+            for (String param : sortParams) {
+                switch (param.trim().toLowerCase()) {
+                    case "year":
+                        Comparator<Film> byYear = Comparator.comparing(
+                                Film::getReleaseDate,
+                                Comparator.nullsLast(Comparator.naturalOrder())
+                        );
+                        comparator = comparator == null ? byYear : comparator.thenComparing(byYear);
+                        break;
+
+                    case "likes":
+                        Comparator<Film> byLikes = Comparator.comparing(
+                                film -> film.getLikes().size(),
+                                Comparator.reverseOrder()
+                        );
+                        comparator = comparator == null ? byLikes : comparator.thenComparing(byLikes);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            if (comparator != null) {
+                films = films.stream()
+                        .sorted(comparator)
+                        .collect(Collectors.toList());
+            }
+        }
+        return films;
+    }
 
     private void updateGenres(Film film) {
         update(DELETE_GENRES, film.getId());
@@ -266,7 +298,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         batch.forEach(args -> log.info("Добавлен режиссер {} к фильму: {}", args[1], args[0]));
     }
-
 
     private void insertGenres(Film film) {
         if (film.getGenres() == null) {

@@ -75,4 +75,8 @@ public class FilmService {
     public Collection<FilmDto> getPopularFilms(int count) {
         return filmStorage.getPopularFilms(count);
     }
+
+    public Collection<Film> getSortedFilm(Long id, String sort) {
+        return filmStorage.getSortedFilm(id, sort);
+    }
 }

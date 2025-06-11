@@ -28,3 +28,6 @@ VALUES
     ('PG-13'),
     ('R'),
     ('NC-17');
+
+DELETE from film_director;
+DELETE from directors;

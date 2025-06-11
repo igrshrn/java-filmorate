@@ -47,7 +47,7 @@ public class FilmResultSetExtractor implements ResultSetExtractor<Map<Long, Film
                         .build());
             }
 
-            Long userId = rs.getObject("like_user_id", Long.class);
+            Long userId = rs.getObject("user_id", Long.class);
             if (userId != null && userId != 0) {
                 film.getLikes().add(userId);
             }

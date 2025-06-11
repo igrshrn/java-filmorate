@@ -62,13 +62,4 @@ class DirectorControllerTest {
             assertEquals(1, 2);
         }
     }
-
-
-    @Test
-    void update() {
-    }
-
-    @Test
-    void delete() {
-    }
 }
