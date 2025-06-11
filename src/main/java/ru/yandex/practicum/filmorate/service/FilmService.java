@@ -22,14 +22,16 @@ public class FilmService {
     private final UserService userService;
     private final GenreService genreService;
     private final MpaService mpaService;
+    private final DirectorService directorService;
     private final EventService eventService;
 
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService) {
+      @Autowired
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService,DirectorService directorService) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.genreService = genreService;
         this.mpaService = mpaService;
+        this.directorService = directorService;
         this.eventService = eventService;
     }
 
@@ -79,5 +81,10 @@ public class FilmService {
 
     public Collection<FilmDto> getPopularFilms(int count) {
         return filmStorage.getPopularFilms(count);
+    }
+
+    public Collection<Film> getSortedFilm(Long id, String sort) {
+        directorService.getByID(id);
+        return filmStorage.getSortedFilm(id, sort);
     }
 }
