@@ -1,9 +1,6 @@
 package ru.yandex.practicum.filmorate.utils;
 
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -104,5 +101,14 @@ public class RandomUtils {
             result.append(CHARACTERS.charAt(index));
         }
         return result.toString();
+    }
+
+    public Review getReview(long filmId, long userId) {
+        return Review.builder()
+                .content(getWord(50))
+                .isPositive(RANDOM.nextBoolean())
+                .userId(userId)
+                .filmId(filmId)
+                .build();
     }
 }
