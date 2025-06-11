@@ -25,7 +25,7 @@ public class FilmService {
     private final DirectorDbStorage directorDbStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, DirectorDbStorage directorDbStorage) {
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService,DirectorDbStorage directorDbStorage) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.genreService = genreService;
