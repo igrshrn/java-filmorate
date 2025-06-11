@@ -112,8 +112,16 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             "f.description AS description, " +
             "f.release_date AS release_date, " +
             "f.duration AS duration, " +
-            "f.mpa_id AS mpa_id " +
+            "m.id AS mpa_id, " +
+            "m.name AS mpa_name, " +
+            "g.id AS genre_id, " +
+            "g.name AS genre_name, " +
+            "fl.user_id AS user_id, " +
+            "COUNT(fl.user_id) AS like_count " +
             "FROM films f " +
+            "LEFT JOIN film_genres fg ON f.id = fg.film_id " +
+            "LEFT JOIN genres g ON fg.genre_id = g.id " +
+            "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
             "JOIN mpa m ON f.mpa_id = m.id " +
             "WHERE f.id IN (" +
             "SELECT film_id FROM film_likes " +
@@ -309,7 +317,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 film.getLikes().add(userId);
             }
         }, id, id, id);
-        System.out.println(filmMap);
         return filmMap.values();
     }
 
