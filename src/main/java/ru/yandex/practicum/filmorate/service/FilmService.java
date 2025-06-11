@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
@@ -23,14 +24,16 @@ public class FilmService {
     private final GenreService genreService;
     private final MpaService mpaService;
     private final DirectorDbStorage directorDbStorage;
-
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, DirectorDbStorage directorDbStorage) {
+    private final EventService eventService;
+    
+      @Autowired
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService,DirectorDbStorage directorDbStorage) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.genreService = genreService;
         this.mpaService = mpaService;
         this.directorDbStorage = directorDbStorage;
+        this.eventService = eventService;
     }
 
     public Film create(Film film) {
@@ -66,6 +69,7 @@ public class FilmService {
         userService.getUserById(userId);
         filmStorage.addLike(filmId, userId);
         log.info("Пользователь с id {} поставил лайк фильму с id {}", userId, filmId);
+        eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.ADD, filmId);
     }
 
     public void deleteLike(long filmId, long userId) {
@@ -73,6 +77,7 @@ public class FilmService {
         userService.getUserById(userId);
         filmStorage.removeLike(filmId, userId);
         log.info("Пользователь с id {} удалил лайк с фильма с id {}", userId, filmId);
+        eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.REMOVE, filmId);
     }
 
     public Collection<FilmDto> getPopularFilms(int count) {

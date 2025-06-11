@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 
@@ -15,12 +16,14 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserService userService;
     private final FilmService filmService;
+    private final EventService eventService;
 
     @Autowired
-    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService) {
+    public ReviewService(ReviewStorage reviewStorage, UserService userService, FilmService filmService, EventService eventService) {
         this.reviewStorage = reviewStorage;
         this.userService = userService;
         this.filmService = filmService;
+        this.eventService = eventService;
     }
 
     public Review create(Review review) {
@@ -31,6 +34,7 @@ public class ReviewService {
         filmService.getFilmById(review.getFilmId());
         Review createdReview = reviewStorage.create(review);
         log.info("Создан новый отзыв: {}", createdReview);
+        eventService.addEvent(review.getUserId(), Event.EventType.REVIEW, Event.Operation.ADD, createdReview.getReviewId());
         return createdReview;
     }
 
@@ -38,6 +42,7 @@ public class ReviewService {
         getReviewById(review.getReviewId());
         Review updatedReview = reviewStorage.update(review);
         log.info("Отзыв обновлен: {}", updatedReview);
+        eventService.addEvent(review.getUserId(), Event.EventType.REVIEW, Event.Operation.UPDATE, review.getReviewId());
         return updatedReview;
     }
 
@@ -69,8 +74,10 @@ public class ReviewService {
     }
 
     public void delete(long id) {
+        Review review = getReviewById(id);
         reviewStorage.delete(id);
         log.info("Удален отзыв с ID: {}", id);
+        eventService.addEvent(review.getUserId(), Event.EventType.REVIEW, Event.Operation.REMOVE, id);
     }
 
     public void addLike(long reviewId, long userId) {
