@@ -8,4 +8,6 @@ public interface EventStorage {
     void addEvent(Event event);
 
     List<Event> getFeed(long userId);
+
+    void deleteFeed(long userId);
 }

@@ -27,4 +27,8 @@ public class EventService {
     public List<Event> getFeed(long userId) {
         return eventStorage.getFeed(userId);
     }
+
+    public void deleteFeed(long userId) {
+        eventStorage.deleteFeed(userId);
+    }
 }

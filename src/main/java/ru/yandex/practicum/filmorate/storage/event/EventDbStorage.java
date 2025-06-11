@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Repository
-public class EventDbStorage implements EventStorage  {
+public class EventDbStorage implements EventStorage {
     private final JdbcTemplate jdbcTemplate;
 
     public EventDbStorage(JdbcTemplate jdbcTemplate) {
@@ -26,6 +26,12 @@ public class EventDbStorage implements EventStorage  {
     public List<Event> getFeed(long userId) {
         String sql = "SELECT * FROM events WHERE user_id =? ORDER BY timestamp ASC";
         return jdbcTemplate.query(sql, this::mapRowToEvent, userId);
+    }
+
+    @Override
+    public void deleteFeed(long userId) {
+        String sql = "DELETE events WHERE user_id = ? OR entity_id = ?";
+        jdbcTemplate.update(sql, userId, userId);
     }
 
     private Event mapRowToEvent(ResultSet rs, int rowNum) throws SQLException {

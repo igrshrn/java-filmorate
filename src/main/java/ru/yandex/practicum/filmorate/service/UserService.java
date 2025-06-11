@@ -35,6 +35,7 @@ public class UserService {
 
     public void delete(long id) {
         this.getUserById(id);
+        eventService.deleteFeed(id);
         userStorage.delete(id);
     }
 
