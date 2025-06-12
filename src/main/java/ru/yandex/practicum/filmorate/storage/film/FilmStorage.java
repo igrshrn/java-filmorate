@@ -23,7 +23,5 @@ public interface FilmStorage {
 
     void removeLike(long filmId, long userId);
 
-    // Recommendations
-
     Collection<FilmDto> getRecommendedFilms(long id);
 }
