@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.dal.film.FilmRowMapper;
 import ru.yandex.practicum.filmorate.dal.user.UserResultSetExtractor;
 import ru.yandex.practicum.filmorate.dal.user.UserRowMapper;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
@@ -22,6 +23,7 @@ import ru.yandex.practicum.filmorate.utils.RandomUtils;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,6 +39,8 @@ class FilmDbStorageTest {
     @Autowired
     private UserDbStorage userDbStorage;
     protected RandomUtils randomUtils = new RandomUtils();
+    @Autowired
+    private DirectorDbStorage directorDbStorage;
 
     @Test
     void create() {
@@ -181,5 +185,53 @@ class FilmDbStorageTest {
 
         Collection<FilmDto> popularAfterRemove = filmDbStorage.getPopularFilms(1);
         assertThat(popularAfterRemove.iterator().next().getLikesCount()).isEqualTo(0);
+    }
+
+    @Test
+    void searchFilmsByTitle() {
+        Film film1 = filmDbStorage.create(randomUtils.getFilm());
+        film1.setName("Крадущийся в ночи");
+        filmDbStorage.update(film1);
+
+        Film film2 = filmDbStorage.create(randomUtils.getFilm());
+        film2.setName("Интерстеллар");
+        filmDbStorage.update(film2);
+
+        Film film3 = filmDbStorage.create(randomUtils.getFilm());
+        film3.setName("Крёстный отец");
+        filmDbStorage.update(film3);
+
+        Collection<Film> searchResults = filmDbStorage.searchFilms("крад", List.of("title"));
+
+        assertThat(searchResults).hasSize(1);
+        assertThat(searchResults.iterator().next().getId()).isEqualTo(film1.getId());
+    }
+
+    @Test
+    void searchFilmsByDirector() {
+        Director director1 = directorDbStorage.create(Director.builder().name("Кристофер Нолан").build());
+        Director director2 = directorDbStorage.create(Director.builder().name("Квентин Тарантино").build());
+        Director director3 = directorDbStorage.create(Director.builder().name("Энг Ли").build());
+
+        Film film1 = randomUtils.getFilm();
+        film1.setName("Начало");
+        film1.setDirectors(Set.of(director1));
+        film1 = filmDbStorage.create(film1);
+
+        Film film2 = randomUtils.getFilm();
+        film2.setName("Криминальное чтиво");
+        film2.setDirectors(Set.of(director2));
+        film2 = filmDbStorage.create(film2);
+
+        Film film3 = randomUtils.getFilm();
+        film3.setName("Крадущийся тигр, затаившийся дракон");
+        film3.setDirectors(Set.of(director3));
+        film3 = filmDbStorage.create(film3);
+
+        Collection<Film> searchResults = filmDbStorage.searchFilms("нолан", List.of("director"));
+
+        assertThat(searchResults).hasSize(1);
+        assertThat(searchResults.iterator().next().getId()).isEqualTo(film1.getId());
+        assertThat(searchResults.iterator().next().getDirectors()).contains(director1);
     }
 }
