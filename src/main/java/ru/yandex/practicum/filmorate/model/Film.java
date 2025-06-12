@@ -42,6 +42,9 @@ public class Film {
     @NotNull(message = "Рейтинг MPA не может быть пустым")
     private Mpa mpa;
 
+    @NotNull(message = "Режиссер не может быть пустым")
+    private Set<Director> directors;
+
     @JsonCreator
     public Film(
             @JsonProperty("id") long id,
@@ -51,7 +54,8 @@ public class Film {
             @JsonProperty("duration") Integer duration,
             @JsonProperty("likes") Set<Long> likes,
             @JsonProperty("genres") Set<Genre> genres,
-            @JsonProperty("mpa") Mpa mpa) {
+            @JsonProperty("mpa") Mpa mpa,
+            @JsonProperty("directors") Set<Director> directors) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -60,7 +64,7 @@ public class Film {
         this.mpa = mpa;
         this.likes = likes != null ? likes : new HashSet<>();
         this.genres = genres != null ? genres : new HashSet<>();
+        this.directors = directors != null ? directors : new HashSet<>();
     }
-
 }
 

@@ -23,5 +23,5 @@ public interface FilmStorage {
 
     void removeLike(long filmId, long userId);
 
-    Collection<FilmDto> getRecommendedFilms(long id);
+    Collection<Film> getSortedFilm(Long id, String sort);
 }

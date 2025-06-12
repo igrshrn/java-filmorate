@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.dal.film;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -51,8 +52,14 @@ public class FilmResultSetExtractor implements ResultSetExtractor<Map<Long, Film
                 film.getLikes().add(userId);
             }
 
+            Long directorId = rs.getObject("director_id", Long.class);
+            if (directorId != null && directorId != 0) {
+                film.getDirectors().add(Director.builder()
+                        .id(directorId)
+                        .name(rs.getString("director_name"))
+                        .build());
+            }
         }
-
         return filmMap;
     }
 }

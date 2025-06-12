@@ -25,6 +25,7 @@ public class FilmRowMapper implements RowMapper<Film>, Serializable {
                 .mpa(Mpa.builder().build())
                 .genres(new HashSet<>())
                 .likes(new HashSet<>())
+                .directors(new HashSet<>())
                 .build();
     }
 }

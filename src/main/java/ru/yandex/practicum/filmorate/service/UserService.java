@@ -4,20 +4,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.UserFriendDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final EventService eventService;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(UserStorage userStorage, EventService eventService) {
         this.userStorage = userStorage;
+        this.eventService = eventService;
     }
 
     public User create(User user) {
@@ -31,6 +35,7 @@ public class UserService {
 
     public void delete(long id) {
         this.getUserById(id);
+        eventService.deleteFeed(id);
         userStorage.delete(id);
     }
 
@@ -55,6 +60,7 @@ public class UserService {
         this.getUserById(friendId);
         userStorage.addFriend(userId, friendId);
         log.info("Пользователь с ID {} отправил запрос на дружбу пользователяю с ID {} ", userId, friendId);
+        eventService.addEvent(userId, Event.EventType.FRIEND, Event.Operation.ADD, friendId);
     }
 
     public void confirmFriend(long userId, long friendId) {
@@ -69,6 +75,7 @@ public class UserService {
         if (this.checkRelationship(userId, friendId)) {
             userStorage.deleteFriend(userId, friendId);
             log.info("Пользователь с ID {} удалил дружбу с пользователем с ID {} ", userId, friendId);
+            eventService.addEvent(userId, Event.EventType.FRIEND, Event.Operation.REMOVE, friendId);
         }
     }
 
@@ -85,5 +92,10 @@ public class UserService {
         userStorage.getUserById(userId);
         userStorage.getUserById(otherId);
         return userStorage.getCommonFriends(userId, otherId);
+    }
+
+    public List<Event> getFeed(long userId) {
+        this.getUserById(userId);
+        return eventService.getFeed(userId);
     }
 }
