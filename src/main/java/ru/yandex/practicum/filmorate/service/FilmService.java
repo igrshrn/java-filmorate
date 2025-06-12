@@ -12,6 +12,8 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -86,5 +88,12 @@ public class FilmService {
     public Collection<Film> getSortedFilm(Long id, String sort) {
         directorService.getByID(id);
         return filmStorage.getSortedFilm(id, sort);
+    }
+
+    public Collection<Film> searchFilms(String query, List<String> by) {
+        if (query == null || query.isBlank() || by == null || by.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return filmStorage.searchFilms(query, by);
     }
 }

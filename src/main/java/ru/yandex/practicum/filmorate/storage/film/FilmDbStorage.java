@@ -143,6 +143,16 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LEFT JOIN directors d ON fd.director_id = d.id
             ORDER BY l.like_count DESC""".formatted(POPULAR_SUBQUERY);
 
+    private static final String SEARCH_FILMS = """
+            SELECT %s
+            FROM films f
+            %s
+            WHERE 1=0
+            %s
+            GROUP BY f.id, m.id, g.id, d.id
+            ORDER BY COUNT(DISTINCT fl.user_id) DESC
+            """.formatted(FILM_COLUMNS, FILM_JOIN, "%s");
+
     @Override
     public Film create(Film film) {
         long id = insert(INSERT,
@@ -263,13 +273,40 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getSortedFilm(Long id, String sort) {
+    public Collection<Film> getSortedFilm(Long directorId, String sort) {
         String orderByClause = buildOrderByClause(sort);
         String sql = FIND_BY_DIRECTOR_ID;
         if (orderByClause != null) {
             sql += " ORDER BY " + orderByClause;
         }
-        return findMany(sql, id);
+        return findMany(sql, directorId);
+    }
+
+    @Override
+    public Collection<Film> searchFilms(String query, List<String> by) {
+        String likeQuery = "%" + query.toLowerCase() + "%";
+        List<Object> params = new ArrayList<>();
+
+        List<String> conditions = new ArrayList<>();
+        if (by.contains("title")) {
+            conditions.add("LOWER(f.name) LIKE ?");
+            params.add(likeQuery);
+        }
+        if (by.contains("director")) {
+            conditions.add("LOWER(d.name) LIKE ?");
+            params.add(likeQuery);
+        }
+
+        String conditionsClause = conditions.isEmpty() ? "" : "OR " + String.join(" OR ", conditions);
+        String sql = String.format(SEARCH_FILMS, conditionsClause);
+
+        log.debug("Поиск SQL: {}", sql);
+        log.debug("Параметры поиска: {}", params);
+
+        Collection<Film> results = findMany(sql, params.toArray());
+        log.debug("Результаты поиска: {}", results);
+
+        return results;
     }
 
     private String buildOrderByClause(String sort) {
@@ -286,7 +323,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     orderBy.add("f.release_date ASC");
                     break;
                 case "likes":
-                    orderBy.add("like_count DESC");
+                    orderBy.add("COUNT(fl.user_id) DESC");
                     break;
                 default:
                     break;

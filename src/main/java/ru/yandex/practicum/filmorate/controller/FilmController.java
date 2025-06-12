@@ -9,7 +9,9 @@ import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @Validated
 @RestController
@@ -67,4 +69,10 @@ public class FilmController {
         return filmService.getSortedFilm(directorId, sort);
     }
 
+    @GetMapping("/search")
+    public Collection<Film> searchFilms(@RequestParam String query,
+                                        @RequestParam(defaultValue = "title,director") String by) {
+        List<String> byList = Arrays.asList(by.split(","));
+        return filmService.searchFilms(query, byList);
+    }
 }
