@@ -106,40 +106,36 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LEFT JOIN film_likes fl ON f.id = fl.film_id
             ORDER BY l.like_count DESC""".formatted(POPULAR_SUBQUERY);
 
-    private static final String GET_RECOMMENDED_FILMS_QUERY = "SELECT " +
-            "f.id AS id, " +
-            "f.name AS name, " +
-            "f.description AS description, " +
-            "f.release_date AS release_date, " +
-            "f.duration AS duration, " +
-            "m.id AS mpa_id, " +
-            "m.name AS mpa_name, " +
-            "g.id AS genre_id, " +
-            "g.name AS genre_name, " +
-            "fl.user_id AS user_id, " +
-            "COUNT(fl.user_id) AS like_count " +
-            "FROM films f " +
-            "LEFT JOIN film_genres fg ON f.id = fg.film_id " +
-            "LEFT JOIN genres g ON fg.genre_id = g.id " +
-            "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
-            "JOIN mpa m ON f.mpa_id = m.id " +
-            "WHERE f.id IN (" +
-            "SELECT film_id FROM film_likes " +
-            "WHERE user_id IN (" +
-            "SELECT fl1.user_id FROM film_likes fl1 " +
-            "RIGHT JOIN film_likes fl2 ON fl2.film_id = fl1.film_id " +
-            "GROUP BY fl1.user_id, fl2.user_id " +
-            "HAVING fl1.user_id IS NOT NULL AND " +
-            "fl1.user_id != ? AND " +
-            "fl2.user_id = ? " +
-            "ORDER BY COUNT(fl1.user_id) DESC " +
-            "LIMIT 3 " +
-            ") " +
-            "AND film_id NOT IN (" +
-            "SELECT film_id FROM film_likes " +
-            "WHERE user_id = ?" +
-            ")" +
-            ")";
+    private static final String GET_RECOMMENDED_FILMS_QUERY = """
+            SELECT
+                f.id AS id,
+                f.name AS name,
+                f.description AS description,
+                f.release_date AS release_date,
+                f.duration AS duration,
+                m.id AS mpa_id,
+                m.name AS mpa_name,
+                g.id AS genre_id,
+                g.name AS genre_name,
+                fl.user_id AS user_id
+            FROM films f
+            LEFT JOIN film_genres fg ON f.id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.id
+            LEFT JOIN film_likes fl ON f.id = fl.film_id
+            LEFT JOIN mpa m ON f.mpa_id = m.id
+            WHERE f.id IN (
+            SELECT film_id FROM film_likes
+            WHERE user_id IN (
+            SELECT fl1.user_id FROM film_likes fl1
+            RIGHT JOIN film_likes fl2 ON fl2.film_id = fl1.film_id
+            GROUP BY fl1.user_id, fl2.user_id
+            HAVING fl1.user_id IS NOT NULL AND
+            fl1.user_id != ? AND fl2.user_id = ?
+            ORDER BY COUNT(fl1.user_id) DESC
+            LIMIT 3)
+            AND film_id NOT IN (
+            SELECT film_id FROM film_likes
+            WHERE user_id = ?))""";
 
     @Override
     public Film create(Film film) {
@@ -289,7 +285,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                             .mpa(Mpa.builder().build())
                             .genres(new HashSet<>())
                             .likes(new HashSet<>())
-                            .likesCount(rs.getLong("like_count"))
+                            .likesCount(0)
                             .build();
                 } catch (SQLException e) {
                     throw new RuntimeException("Ошибка маппинга", e);
@@ -299,7 +295,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                     .id(rs.getLong("mpa_id"))
                     .name(rs.getString("mpa_name"))
                     .build());
-
             Long genreId = rs.getObject("genre_id", Long.class);
             if (genreId != null && genreId != 0) {
                 film.getGenres().add(Genre.builder()
@@ -307,15 +302,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                         .name(rs.getString("genre_name"))
                         .build());
             }
-
             Long userId = rs.getObject("user_id", Long.class);
             if (userId != null && userId != 0) {
                 film.getLikes().add(userId);
             }
-            Long likeCount = rs.getObject("like_count", Long.class);
-            if (likeCount != null && likeCount != 0) {
-                film.getLikes().add(userId);
-            }
+            film.setLikesCount(film.getLikes().size());
         }, id, id, id);
         return filmMap.values();
     }
