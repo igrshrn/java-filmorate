@@ -76,8 +76,6 @@ public class FilmService {
         return filmStorage.getPopularFilms(count);
     }
 
-    //Recommendations
-
     public Collection<FilmDto> getRecommendedFilms(long id) {
         return filmStorage.getRecommendedFilms(id);
     }
