@@ -87,4 +87,8 @@ public class FilmService {
         directorService.getByID(id);
         return filmStorage.getSortedFilm(id, sort);
     }
+
+    public Collection<FilmDto> getRecommendedFilms(long id) {
+        return filmStorage.getRecommendedFilms(id);
+    }
 }
