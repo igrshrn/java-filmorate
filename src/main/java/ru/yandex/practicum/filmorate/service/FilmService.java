@@ -11,10 +11,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -90,10 +87,11 @@ public class FilmService {
         return filmStorage.getSortedFilm(id, sort);
     }
 
-    public Collection<Film> searchFilms(String query, List<String> by) {
+    public Collection<Film> searchFilms(String query, String by) {
         if (query == null || query.isBlank() || by == null || by.isEmpty()) {
             return Collections.emptyList();
         }
-        return filmStorage.searchFilms(query, by);
+        List<String> byList = Arrays.asList(by.split(","));
+        return filmStorage.searchFilms(query, byList);
     }
 }

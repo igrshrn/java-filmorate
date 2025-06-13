@@ -72,7 +72,6 @@ public class FilmController {
     @GetMapping("/search")
     public Collection<Film> searchFilms(@RequestParam String query,
                                         @RequestParam(defaultValue = "title,director") String by) {
-        List<String> byList = Arrays.asList(by.split(","));
-        return filmService.searchFilms(query, byList);
+        return filmService.searchFilms(query, by);
     }
 }
