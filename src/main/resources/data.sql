@@ -2,13 +2,13 @@ DELETE FROM events;
 DELETE FROM film_likes;
 DELETE FROM friends;
 DELETE FROM film_genres;
+DELETE from film_director;
 DELETE FROM review_votes;
 DELETE FROM reviews;
 DELETE FROM users;
 DELETE FROM films;
 DELETE FROM mpa;
 DELETE FROM genres;
-DELETE from film_director;
 DELETE from directors;
 
 ALTER TABLE `users` ALTER COLUMN `id` RESTART WITH 1;
