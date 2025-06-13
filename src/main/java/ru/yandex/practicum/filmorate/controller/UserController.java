@@ -90,7 +90,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}/recommendations")
-    public Collection<FilmDto> getRecommendedFilms(@PathVariable @Positive @NotNull long id) {
-        return filmService.getRecommendedFilms(id);
+    public Collection<FilmDto> getRecommendedFilms(@PathVariable @Positive long id,
+                                                   @RequestParam(required = false, defaultValue = "3") @Positive int limit) {
+        return filmService.getRecommendedFilms(id, limit);
     }
 }

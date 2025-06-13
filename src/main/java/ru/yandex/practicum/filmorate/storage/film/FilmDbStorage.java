@@ -173,7 +173,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             HAVING fl1.user_id IS NOT NULL AND
             fl1.user_id != ? AND fl2.user_id = ?
             ORDER BY COUNT(fl1.user_id) DESC
-            LIMIT 3)
+            LIMIT ?)
             AND film_id NOT IN (
             SELECT film_id FROM film_likes
             WHERE user_id = ?))""";
@@ -368,7 +368,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public Collection<FilmDto> getRecommendedFilms(long id) {
+    public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
         Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
 
         jdbc.query(GET_RECOMMENDED_FILMS_QUERY, (rs) -> {
@@ -413,7 +413,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                         .name(rs.getString("director_name"))
                         .build());
             }
-        }, id, id, id);
+        }, id, id, limit, id);
         return filmMap.values();
     }
 
