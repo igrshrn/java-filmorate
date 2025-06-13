@@ -178,6 +178,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             SELECT film_id FROM film_likes
             WHERE user_id = ?))""";
 
+    private static final String GET_FILMS_IDS_BY_USER_ID = "SELECT film_id FROM film_likes WHERE user_id = ?";
+
     @Override
     public Film create(Film film) {
         long id = insert(INSERT,
@@ -415,6 +417,10 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             }
         }, id, id, limit, id);
         return filmMap.values();
+    }
+
+    public Collection<Long> getIdsOfFilmByUserId(long userId) {
+        return jdbc.queryForList(GET_FILMS_IDS_BY_USER_ID, Long.class, userId);
     }
 
 }
