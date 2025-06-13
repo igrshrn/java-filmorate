@@ -201,7 +201,8 @@ class FilmDbStorageTest {
         film3.setName("Крёстный отец");
         film3 = filmDbStorage.create(film3);
 
-        Collection<Film> searchResults = filmDbStorage.searchFilms("крад", List.of("title"));
+        String searchQuery = extractSubstring(film1.getName(), 0, 4);
+        Collection<Film> searchResults = filmDbStorage.searchFilms(searchQuery, List.of("title"));
 
         assertThat(searchResults).hasSize(1);
         assertThat(searchResults.iterator().next().getId()).isEqualTo(film1.getId());
@@ -228,10 +229,19 @@ class FilmDbStorageTest {
         film3.setDirectors(Set.of(director3));
         film3 = filmDbStorage.create(film3);
 
-        Collection<Film> searchResults = filmDbStorage.searchFilms("нолан", List.of("director"));
+        String searchQuery = extractSubstring(director1.getName(), 10, 5);
+        Collection<Film> searchResults = filmDbStorage.searchFilms(searchQuery, List.of("director"));
 
         assertThat(searchResults).hasSize(1);
         assertThat(searchResults.iterator().next().getId()).isEqualTo(film1.getId());
         assertThat(searchResults.iterator().next().getDirectors()).contains(director1);
+    }
+
+    private String extractSubstring(String input, int startIndex, int length) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+        int endIndex = Math.min(startIndex + length, input.length());
+        return input.substring(startIndex, endIndex).toLowerCase();
     }
 }
