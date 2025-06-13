@@ -27,4 +27,6 @@ public interface FilmStorage {
     Collection<Film> getSortedFilm(Long id, String sort);
 
     Collection<Film> searchFilms(String query, List<String> by);
+
+    Collection<FilmDto> getRecommendedFilms(long id, int limit);
 }

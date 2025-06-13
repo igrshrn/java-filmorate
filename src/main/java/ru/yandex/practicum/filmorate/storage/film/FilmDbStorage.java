@@ -153,6 +153,41 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             ORDER BY COUNT(DISTINCT fl.user_id) DESC
             """.formatted(FILM_COLUMNS, FILM_JOIN, "%s");
 
+    private static final String GET_RECOMMENDED_FILMS_QUERY = """
+            SELECT
+                f.id AS id,
+                f.name AS name,
+                f.description AS description,
+                f.release_date AS release_date,
+                f.duration AS duration,
+                m.id AS mpa_id,
+                m.name AS mpa_name,
+                g.id AS genre_id,
+                g.name AS genre_name,
+                fl.user_id AS user_id,
+                d.id AS director_id,
+                d.name AS director_name
+            FROM films f
+            LEFT JOIN film_genres fg ON f.id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.id
+            LEFT JOIN film_likes fl ON f.id = fl.film_id
+            LEFT JOIN film_director fd ON f.id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.id
+            LEFT JOIN mpa m ON f.mpa_id = m.id
+            WHERE f.id IN (
+            SELECT film_id FROM film_likes
+            WHERE user_id IN (
+            SELECT fl1.user_id FROM film_likes fl1
+            RIGHT JOIN film_likes fl2 ON fl2.film_id = fl1.film_id
+            GROUP BY fl1.user_id, fl2.user_id
+            HAVING fl1.user_id IS NOT NULL AND
+            fl1.user_id != ? AND fl2.user_id = ?
+            ORDER BY COUNT(fl1.user_id) DESC
+            LIMIT ?)
+            AND film_id NOT IN (
+            SELECT film_id FROM film_likes
+            WHERE user_id = ?))""";
+
     @Override
     public Film create(Film film) {
         long id = insert(INSERT,
@@ -368,4 +403,55 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         batch.forEach(args -> log.info("Добавлен жанр {} к фильму: {}", args[1], args[0]));
     }
+
+    @Override
+    public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
+        Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
+
+        jdbc.query(GET_RECOMMENDED_FILMS_QUERY, (rs) -> {
+            long filmId = rs.getLong("id");
+            FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
+                try {
+                    return FilmDto.builder()
+                            .id(rs.getLong("id"))
+                            .name(rs.getString("name"))
+                            .description(rs.getString("description"))
+                            .releaseDate(rs.getDate("release_date").toLocalDate())
+                            .duration(rs.getInt("duration"))
+                            .mpa(Mpa.builder().build())
+                            .genres(new HashSet<>())
+                            .likes(new HashSet<>())
+                            .likesCount(0)
+                            .build();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Ошибка маппинга", e);
+                }
+            });
+            film.setMpa(Mpa.builder()
+                    .id(rs.getLong("mpa_id"))
+                    .name(rs.getString("mpa_name"))
+                    .build());
+            Long genreId = rs.getObject("genre_id", Long.class);
+            if (genreId != null && genreId != 0) {
+                film.getGenres().add(Genre.builder()
+                        .id(genreId)
+                        .name(rs.getString("genre_name"))
+                        .build());
+            }
+            Long userId = rs.getObject("user_id", Long.class);
+            if (userId != null && userId != 0) {
+                film.getLikes().add(userId);
+            }
+            film.setLikesCount(film.getLikes().size());
+            Long directorId = rs.getObject("director_id", Long.class);
+            if (directorId != null && directorId != 0) {
+                film.getDirectors().add(Director.builder()
+                        .id(directorId)
+                        .name(rs.getString("director_name"))
+                        .build());
+            }
+        }, id, id, limit, id);
+        return filmMap.values();
+    }
+
 }

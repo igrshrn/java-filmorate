@@ -94,4 +94,8 @@ public class FilmService {
         List<String> byList = Arrays.asList(by.split(","));
         return filmStorage.searchFilms(query, byList);
     }
+
+    public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
+        return filmStorage.getRecommendedFilms(id, limit);
+    }
 }
