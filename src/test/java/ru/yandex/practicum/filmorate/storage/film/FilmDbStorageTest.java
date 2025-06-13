@@ -120,7 +120,7 @@ class FilmDbStorageTest {
 
         filmDbStorage.addLike(film1.getId(), user1.getId());
 
-        Collection<FilmDto> popular = filmDbStorage.getPopularFilms(3);
+        Collection<FilmDto> popular = filmDbStorage.getPopularFilms(3,null,null);
         List<FilmDto> popularList = popular.stream().toList();
 
         /**
@@ -178,12 +178,12 @@ class FilmDbStorageTest {
 
         filmDbStorage.addLike(film.getId(), user.getId());
 
-        Collection<FilmDto> popularBeforeRemove = filmDbStorage.getPopularFilms(1);
+        Collection<FilmDto> popularBeforeRemove = filmDbStorage.getPopularFilms(1,null,null);
         assertThat(popularBeforeRemove.iterator().next().getLikesCount()).isEqualTo(1);
 
         filmDbStorage.removeLike(film.getId(), user.getId());
 
-        Collection<FilmDto> popularAfterRemove = filmDbStorage.getPopularFilms(1);
+        Collection<FilmDto> popularAfterRemove = filmDbStorage.getPopularFilms(1,null,null);
         assertThat(popularAfterRemove.iterator().next().getLikesCount()).isEqualTo(0);
     }
 
