@@ -189,17 +189,17 @@ class FilmDbStorageTest {
 
     @Test
     void searchFilmsByTitle() {
-        Film film1 = filmDbStorage.create(randomUtils.getFilm());
+        Film film1 = randomUtils.getFilm();
         film1.setName("Крадущийся в ночи");
-        filmDbStorage.update(film1);
+        film1 = filmDbStorage.create(film1);
 
-        Film film2 = filmDbStorage.create(randomUtils.getFilm());
+        Film film2 = randomUtils.getFilm();
         film2.setName("Интерстеллар");
-        filmDbStorage.update(film2);
+        film2 = filmDbStorage.create(film2);
 
-        Film film3 = filmDbStorage.create(randomUtils.getFilm());
+        Film film3 = randomUtils.getFilm();
         film3.setName("Крёстный отец");
-        filmDbStorage.update(film3);
+        film3 = filmDbStorage.create(film3);
 
         Collection<Film> searchResults = filmDbStorage.searchFilms("крад", List.of("title"));
 
