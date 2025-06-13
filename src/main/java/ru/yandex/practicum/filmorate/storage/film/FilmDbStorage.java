@@ -373,6 +373,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 film.getLikes().add(userId);
             }
 
+            Long likeCount = rs.getObject("like_count", Long.class);
+            if (likeCount != null && likeCount != 0) {
+                film.getLikes().add(userId);
+            }
+
             Long directorId = rs.getObject("director_id", Long.class);
             if (directorId != null && directorId != 0) {
                 film.getDirectors().add(Director.builder()
