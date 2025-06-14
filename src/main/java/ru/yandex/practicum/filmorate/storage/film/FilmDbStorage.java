@@ -202,7 +202,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 fl1.user_id AS user_id,
                 d.id AS director_id,
                 d.name AS director_name,
-                COUNT(fl1.film_id) AS rate
+                COUNT(fl1.film_id) AS rate,
+                COUNT(fl1.user_id) AS like_count
             FROM films f
             LEFT JOIN film_genres fg ON f.id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.id
@@ -498,7 +499,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                             .mpa(Mpa.builder().build())
                             .genres(new HashSet<>())
                             .likes(new HashSet<>())
-                            .likesCount(0)
+                            .likesCount(rs.getLong("like_count"))
                             .build();
                 } catch (SQLException e) {
                     throw new RuntimeException("Ошибка маппинга", e);
@@ -519,7 +520,10 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             if (userId != null && userId != 0) {
                 film.getLikes().add(userId);
             }
-            film.setLikesCount(film.getLikes().size());
+            Long likeCount = rs.getObject("like_count", Long.class);
+            if (likeCount != null && likeCount != 0) {
+                film.getLikes().add(userId);
+            }
             Long directorId = rs.getObject("director_id", Long.class);
             if (directorId != null && directorId != 0) {
                 film.getDirectors().add(Director.builder()
