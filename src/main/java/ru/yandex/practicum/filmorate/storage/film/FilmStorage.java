@@ -30,5 +30,5 @@ public interface FilmStorage {
 
     Collection<FilmDto> getRecommendedFilms(long id, int limit);
 
-    Collection<Long> getIdsOfFilmByUserId(long userId);
+    Collection<FilmDto> getCommonFilms(long userId, long friendId);
 }

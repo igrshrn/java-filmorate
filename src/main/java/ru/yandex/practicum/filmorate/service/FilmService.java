@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.dto.UserFriendDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Event;
@@ -99,15 +100,7 @@ public class FilmService {
         return filmStorage.getRecommendedFilms(id, limit);
     }
 
-    public Collection<Film> getCommonFilms(long userId, long friendId) {
-        userService.getUserById(userId);
-        userService.getUserById(friendId);
-        Collection<Long> idsFilmsOfUser = filmStorage.getIdsOfFilmByUserId(userId);
-        Collection<Long> idsFilmsOfFriend = filmStorage.getIdsOfFilmByUserId(friendId);
-        return idsFilmsOfUser.stream()
-                .filter(idsFilmsOfFriend::contains)
-                .map(this::getFilmById)
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).reversed().thenComparingLong(Film::getId))
-                .toList();
+    public Collection<FilmDto> getCommonFilms(long userId, long friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 }
