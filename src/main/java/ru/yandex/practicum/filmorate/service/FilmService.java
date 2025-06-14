@@ -11,9 +11,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -89,19 +87,15 @@ public class FilmService {
         return filmStorage.getSortedFilm(id, sort);
     }
 
-    public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
-        return filmStorage.getRecommendedFilms(id, limit);
+    public Collection<Film> searchFilms(String query, String by) {
+        if (query == null || query.isBlank() || by == null || by.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> byList = Arrays.asList(by.split(","));
+        return filmStorage.searchFilms(query, byList);
     }
 
-    public Collection<Film> getCommonFilms(long userId, long friendId) {
-        userService.getUserById(userId);
-        userService.getUserById(friendId);
-        Collection<Long> idsFilmsOfUser = filmStorage.getIdsOfFilmByUserId(userId);
-        Collection<Long> idsFilmsOfFriend = filmStorage.getIdsOfFilmByUserId(friendId);
-        return idsFilmsOfUser.stream()
-                .filter(idsFilmsOfFriend::contains)
-                .map(this::getFilmById)
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).reversed().thenComparingLong(Film::getId))
-                .toList();
+    public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
+        return filmStorage.getRecommendedFilms(id, limit);
     }
 }
