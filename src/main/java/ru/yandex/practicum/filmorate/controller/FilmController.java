@@ -72,4 +72,10 @@ public class FilmController {
                                         @RequestParam(defaultValue = "title,director") String by) {
         return filmService.searchFilms(query, by);
     }
+
+    @GetMapping("/common")
+    public Collection<Film> getCommonFilms(@RequestParam @Positive long userId,
+                                           @RequestParam @Positive long friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
 }

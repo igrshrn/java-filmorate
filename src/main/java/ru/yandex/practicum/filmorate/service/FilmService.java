@@ -98,4 +98,16 @@ public class FilmService {
     public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
         return filmStorage.getRecommendedFilms(id, limit);
     }
+
+    public Collection<Film> getCommonFilms(long userId, long friendId) {
+        userService.getUserById(userId);
+        userService.getUserById(friendId);
+        Collection<Long> idsFilmsOfUser = filmStorage.getIdsOfFilmByUserId(userId);
+        Collection<Long> idsFilmsOfFriend = filmStorage.getIdsOfFilmByUserId(friendId);
+        return idsFilmsOfUser.stream()
+                .filter(idsFilmsOfFriend::contains)
+                .map(this::getFilmById)
+                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).reversed().thenComparingLong(Film::getId))
+                .toList();
+    }
 }
