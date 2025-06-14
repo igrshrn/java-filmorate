@@ -188,6 +188,35 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             SELECT film_id FROM film_likes
             WHERE user_id = ?))""";
 
+    private static final String GET_COMMON_FILMS = """
+            SELECT
+                f.id AS id,
+                f.name AS name,
+                f.description AS description,
+                f.release_date AS release_date,
+                f.duration AS duration,
+                m.id AS mpa_id,
+                m.name AS mpa_name,
+                g.id AS genre_id,
+                g.name AS genre_name,
+                fl1.user_id AS user_id,
+                d.id AS director_id,
+                d.name AS director_name,
+                COUNT(fl1.film_id) AS rate,
+                COUNT(fl1.user_id) AS like_count
+            FROM films f
+            LEFT JOIN film_genres fg ON f.id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.id
+            LEFT JOIN film_director fd ON f.id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.id
+            LEFT JOIN mpa m ON f.mpa_id = m.id
+            LEFT JOIN film_likes fl1 ON f.id = fl1.film_id
+            LEFT JOIN film_likes fl2 ON f.id = fl2.film_id
+            WHERE fl1.user_id = ? AND fl2.user_id = ?
+            GROUP BY f.id
+            ORDER BY rate
+            """;
+
     @Override
     public Film create(Film film) {
         long id = insert(INSERT,
@@ -454,4 +483,55 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         return filmMap.values();
     }
 
+    public Collection<FilmDto> getCommonFilms(long uId, long friendId) {
+        Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
+
+        jdbc.query(GET_COMMON_FILMS, (rs) -> {
+            long filmId = rs.getLong("id");
+            FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
+                try {
+                    return FilmDto.builder()
+                            .id(rs.getLong("id"))
+                            .name(rs.getString("name"))
+                            .description(rs.getString("description"))
+                            .releaseDate(rs.getDate("release_date").toLocalDate())
+                            .duration(rs.getInt("duration"))
+                            .mpa(Mpa.builder().build())
+                            .genres(new HashSet<>())
+                            .likes(new HashSet<>())
+                            .likesCount(rs.getLong("like_count"))
+                            .build();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Ошибка маппинга", e);
+                }
+            });
+            film.setMpa(Mpa.builder()
+                    .id(rs.getLong("mpa_id"))
+                    .name(rs.getString("mpa_name"))
+                    .build());
+            Long genreId = rs.getObject("genre_id", Long.class);
+            if (genreId != null && genreId != 0) {
+                film.getGenres().add(Genre.builder()
+                        .id(genreId)
+                        .name(rs.getString("genre_name"))
+                        .build());
+            }
+            Long userId = rs.getObject("user_id", Long.class);
+            if (userId != null && userId != 0) {
+                film.getLikes().add(userId);
+            }
+            Long likeCount = rs.getObject("like_count", Long.class);
+            if (likeCount != null && likeCount != 0) {
+                film.getLikes().add(userId);
+            }
+            Long directorId = rs.getObject("director_id", Long.class);
+            if (directorId != null && directorId != 0) {
+                film.getDirectors().add(Director.builder()
+                        .id(directorId)
+                        .name(rs.getString("director_name"))
+                        .build());
+            }
+        }, uId, friendId);
+        return filmMap.values();
+    }
 }

@@ -98,4 +98,8 @@ public class FilmService {
     public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
         return filmStorage.getRecommendedFilms(id, limit);
     }
+
+    public Collection<FilmDto> getCommonFilms(long userId, long friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
 }
