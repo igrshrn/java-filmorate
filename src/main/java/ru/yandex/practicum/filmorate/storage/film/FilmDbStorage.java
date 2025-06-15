@@ -110,14 +110,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String DELETE_DIRECTOR = "DELETE FROM film_director WHERE film_id = ?";
     private static final String INSERT_DIRECTOR = "INSERT INTO film_director (film_id, director_id) VALUES (?,?)";
 
-    private static final String POPULAR_SUBQUERY = """
-            SELECT f.id AS film_id, COUNT(fl.user_id) AS like_count
-            FROM films f
-                LEFT JOIN film_likes fl ON f.id = fl.film_id
-            GROUP BY f.id
-            ORDER BY like_count DESC
-            LIMIT ?""";
-
     private static final String FIND_POPULAR = """
         SELECT film_data.*,
             fl.user_id AS like_user_id
