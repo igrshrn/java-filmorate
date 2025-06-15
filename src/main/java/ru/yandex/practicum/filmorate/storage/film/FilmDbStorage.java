@@ -251,10 +251,10 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             sqlQuery = FIND_POPULAR.formatted("WHERE g.id = ?");
             params = new Object[]{genre, count};
         } else if (genre == null) {
-            sqlQuery = FIND_POPULAR.formatted("WHERE release_date = ?");
+            sqlQuery = FIND_POPULAR.formatted("WHERE EXTRACT(YEAR FROM f.release_date) = ?");
             params = new Object[]{year, count};
         } else {
-            sqlQuery = FIND_POPULAR.formatted("WHERE g.id = ? AND release_date = ?");
+            sqlQuery = FIND_POPULAR.formatted("WHERE g.id = ? AND EXTRACT(YEAR FROM f.release_date) = ?");
             params = new Object[]{genre, year, count};
         }
 
