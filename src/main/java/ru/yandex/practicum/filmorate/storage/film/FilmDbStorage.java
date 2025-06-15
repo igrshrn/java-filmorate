@@ -118,14 +118,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             ORDER BY like_count DESC
             LIMIT ?""";
 
-    private static final String FIND_POPULAR_WITHOUT_GENRE_YEAR = """
-            SELECT %s, l.like_count
-            FROM(%s) as l
-            LEFT JOIN FILMS f on l.film_id = f.id
-            LEFT %s
-            ORDER BY l.like_count DESC""".formatted(FILM_COLUMNS,POPULAR_SUBQUERY, FILM_JOIN);
-
-    private static final String FIND_POPULAR_WITH_YEAR = """
+    private static final String FIND_POPULAR = """
         SELECT film_data.*,
             fl.user_id AS like_user_id
         FROM (
@@ -145,7 +138,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 COUNT(DISTINCT fl.user_id) AS like_count
             FROM films f
             LEFT %s
-            WHERE EXTRACT(YEAR FROM f.release_date) = ?
+            %s
             GROUP BY
                 f.id, f.name, f.description,
                 f.release_date, f.duration,
@@ -156,69 +149,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LIMIT ?
         ) film_data
         LEFT JOIN film_likes fl ON film_data.film_id = fl.film_id
-        ORDER BY film_data.like_count DESC, film_data.film_id, fl.user_id""".formatted(FILM_JOIN);
-
-    private static final String FIND_POPULAR_WITH_GENRE_YEAR = """
-            SELECT
-            f.id AS film_id,
-            f.name AS film_name,
-            f.description AS film_description,
-            f.release_date AS film_release_date,
-            EXTRACT(YEAR FROM f.release_date) AS release_year,
-            f.duration AS film_duration,
-            m.id AS mpa_id,
-            m.name AS mpa_name,
-            g.id AS genre_id,
-            g.name AS genre_name,
-            fl.user_id AS like_user_id,
-            d.id AS director_id,
-            d.name AS director_name,
-            COUNT(fl.user_id) AS like_count
-            FROM films f
-            LEFT %s
-            WHERE g.id = ? AND EXTRACT(YEAR FROM f.release_date) = ?
-            GROUP BY
-            f.id, f.name, f.description,
-            f.release_date, f.duration,
-            m.id, m.name,
-            g.id, g.name,
-            d.id, d.name,
-            fl.user_id
-            ORDER BY like_count DESC
-            LIMIT ?""".formatted(FILM_JOIN);
-
-    private static final String FIND_POPULAR_WITH_GENRE = """
-                    SELECT film_data.*,
-                        fl.user_id AS like_user_id
-                    FROM (
-                        SELECT
-                            f.id AS film_id,
-                            f.name AS film_name,
-                            f.description AS film_description,
-                            f.release_date AS film_release_date,
-                            EXTRACT(YEAR FROM f.release_date) AS release_year,
-                            f.duration AS film_duration,
-                            m.id AS mpa_id,
-                            m.name AS mpa_name,
-                            g.id AS genre_id,
-                            g.name AS genre_name,
-                            d.id AS director_id,
-                            d.name AS director_name,
-                            COUNT(DISTINCT fl.user_id) AS like_count
-                        FROM films f
-                        LEFT %s
-                        WHERE g.id = ?
-                        GROUP BY
-                            f.id, f.name, f.description,
-                            f.release_date, f.duration,
-                            m.id, m.name,
-                            g.id, g.name,
-                            d.id, d.name
-                        ORDER BY like_count DESC
-                        LIMIT ?
-                    ) film_data
-                    LEFT JOIN film_likes fl ON film_data.film_id = fl.film_id
-                    ORDER BY film_data.like_count DESC, film_data.film_id, fl.user_id""".formatted(FILM_JOIN);
+        ORDER BY film_data.like_count DESC, film_data.film_id, fl.user_id""".formatted(FILM_JOIN,"%s");
 
     private static final String SEARCH_FILMS = """
             SELECT %s
@@ -322,16 +253,16 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         String sqlQuery;
         Object[] params;
         if (genre == null && year == null) {
-            sqlQuery = FIND_POPULAR_WITHOUT_GENRE_YEAR;
+            sqlQuery = FIND_POPULAR.formatted("");
             params = new Object[]{count};
         } else if (genre != null && year == null) {
-            sqlQuery = FIND_POPULAR_WITH_GENRE;
+            sqlQuery = FIND_POPULAR.formatted("WHERE g.id = ?");
             params = new Object[]{genre, count};
         } else if (genre == null) {
-            sqlQuery = FIND_POPULAR_WITH_YEAR;
+            sqlQuery = FIND_POPULAR.formatted("WHERE EXTRACT(YEAR FROM f.release_date) = ?");
             params = new Object[]{year, count};
         } else {
-            sqlQuery = FIND_POPULAR_WITH_GENRE_YEAR;
+            sqlQuery = FIND_POPULAR.formatted("WHERE g.id = ? AND EXTRACT(YEAR FROM f.release_date) = ?");
             params = new Object[]{genre, year, count};
         }
 
@@ -375,7 +306,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
             Long likeCount = rs.getObject("like_count", Long.class);
             if (likeCount != null && likeCount != 0) {
-                film.getLikes().add(userId);
+                film.getLikes().add(likeCount);
             }
 
             Long directorId = rs.getObject("director_id", Long.class);
