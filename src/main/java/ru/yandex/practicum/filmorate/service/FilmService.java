@@ -78,8 +78,8 @@ public class FilmService {
         eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.REMOVE, filmId);
     }
 
-    public Collection<FilmDto> getPopularFilms(int count) {
-        return filmStorage.getPopularFilms(count);
+    public Collection<FilmDto> getPopularFilms(int count, Long genreId,Integer year) {
+        return filmStorage.getPopularFilms(count,genreId,year);
     }
 
     public Collection<Film> getSortedFilm(Long id, String sort) {

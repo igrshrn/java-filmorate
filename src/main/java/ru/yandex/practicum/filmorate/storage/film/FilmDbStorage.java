@@ -110,38 +110,46 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String DELETE_DIRECTOR = "DELETE FROM film_director WHERE film_id = ?";
     private static final String INSERT_DIRECTOR = "INSERT INTO film_director (film_id, director_id) VALUES (?,?)";
 
-    private static final String POPULAR_SUBQUERY = """
-            SELECT f.id AS film_id, COUNT(fl.user_id) AS like_count
-            FROM films f
-                LEFT JOIN film_likes fl ON f.id = fl.film_id
-            GROUP BY f.id
-            ORDER BY like_count DESC
-            LIMIT ?""";
+    private static final String SUB_QUERY = """
+            SELECT f.id,
+                    f.mpa_id,
+                    f.name,
+                    f.description,
+                    f.release_date,
+                    f.duration,
+                    COUNT(distinct fl.user_id) as likes_count
+                FROM films f
+                    LEFT JOIN film_genres fg ON f.id = fg.film_id
+                    LEFT JOIN film_likes fl ON f.id = fl.film_id
+                WHERE (? IS NULL OR fg.genre_id = ?)
+                    AND (? IS NULL OR EXTRACT(YEAR FROM f.release_date) = ?)
+                GROUP BY f.id
+                ORDER BY COUNT(fl.user_id) DESC
+                LIMIT ?""";
 
     private static final String FIND_POPULAR = """
-            SELECT
-                f.id AS film_id,
-                f.name AS film_name,
-                f.description AS film_description,
-                f.release_date AS film_release_date,
-                f.duration AS film_duration,
-                m.id AS mpa_id,
-                m.name AS mpa_name,
-                g.id AS genre_id,
-                g.name AS genre_name,
-                fl.user_id AS like_user_id,
-                d.id AS director_id,
-                d.name AS director_name,
-                l.like_count
-            FROM(%s) as l
-            LEFT JOIN FILMS f on l.film_id = f.id
-            LEFT JOIN mpa m ON f.mpa_id = m.id
-            LEFT JOIN film_genres fg ON f.id = fg.film_id
-            LEFT JOIN genres g ON fg.genre_id = g.id
-            LEFT JOIN film_likes fl ON f.id = fl.film_id
-            LEFT JOIN film_director fd ON f.id = fd.film_id
-            LEFT JOIN directors d ON fd.director_id = d.id
-            ORDER BY l.like_count DESC""".formatted(POPULAR_SUBQUERY);
+                SELECT f.id AS film_id,
+                       f.name AS film_name,
+                       f.description AS film_description,
+                       f.release_date AS film_release_date,
+                       f.duration AS film_duration,
+                       m.id AS mpa_id,
+                       m.name AS mpa_name,
+                       g.id AS genre_id,
+                       g.name AS genre_name,
+                       fl.user_id AS user_id,
+                       d.id AS director_id,
+                       d.name AS director_name,
+                       likes_count
+                FROM (%s) as f
+                JOIN mpa m ON f.mpa_id = m.id
+                LEFT JOIN film_genres fg ON f.id = fg.film_id
+                LEFT JOIN genres g ON fg.genre_id = g.id
+                LEFT JOIN film_likes fl ON f.id = fl.film_id
+                LEFT JOIN film_director fd ON f.id = fd.film_id
+                LEFT JOIN directors d ON fd.director_id = d.id
+                GROUP BY f.id, m.id, g.id, fl.user_id, d.id
+                ORDER BY likes_count DESC""".formatted(SUB_QUERY);
 
     private static final String SEARCH_FILMS = """
             SELECT %s
@@ -268,12 +276,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         log.info("Удален фильм с ID {}", id);
     }
 
-    @Override
-    public Collection<FilmDto> getPopularFilms(int count) {
+   @Override
+    public Collection<FilmDto> getPopularFilms(int count, Long genre, Integer year) {
         Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
 
-        jdbc.query(FIND_POPULAR, (rs) -> {
-
+        jdbc.query(FIND_POPULAR, rs -> {
             long filmId = rs.getLong("film_id");
             FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
                 try {
@@ -286,7 +293,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                             .mpa(Mpa.builder().build())
                             .genres(new HashSet<>())
                             .likes(new HashSet<>())
-                            .likesCount(rs.getLong("like_count"))
+                            .likesCount(rs.getLong("likes_count"))
+                            .directors(new HashSet<>())
                             .build();
                 } catch (SQLException e) {
                     throw new RuntimeException("Ошибка маппинга", e);
@@ -309,10 +317,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             if (userId != null && userId != 0) {
                 film.getLikes().add(userId);
             }
-            Long likeCount = rs.getObject("like_count", Long.class);
-            if (likeCount != null && likeCount != 0) {
-                film.getLikes().add(userId);
-            }
 
             Long directorId = rs.getObject("director_id", Long.class);
             if (directorId != null && directorId != 0) {
@@ -321,7 +325,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                         .name(rs.getString("director_name"))
                         .build());
             }
-        }, count);
+        }, genre,genre,year,year,count);
 
         return filmMap.values();
     }
