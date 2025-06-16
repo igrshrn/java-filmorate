@@ -221,7 +221,6 @@ public class FilmControllerTest extends AbstractControllerTest {
 
         String content = performRequest(HttpMethodEnum.GET, "/films/popular")
                 .andReturn().getResponse().getContentAsString();
-        System.out.println(content);
 
         performRequest(HttpMethodEnum.GET, "/films/popular")
                 .andExpect(status().isOk());

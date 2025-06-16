@@ -36,6 +36,8 @@ public class UserService {
     public void delete(long id) {
         this.getUserById(id);
         eventService.deleteFeed(id);
+        /*eventService.deleteFeedByTypeAndEntity(Event.EventType.LIKE, id);
+        eventService.deleteFeedByTypeAndEntity(Event.EventType.REVIEW, id);*/
         userStorage.delete(id);
     }
 

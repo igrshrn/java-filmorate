@@ -71,8 +71,8 @@ public class FilmService {
         if (!checkLike) {
             filmStorage.addLike(filmId, userId);
             log.info("Пользователь с id {} поставил лайк фильму с id {}", userId, filmId);
-            eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.ADD, filmId);
         }
+        eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.ADD, filmId);
     }
 
     public boolean checkLike(long filmId, long userId) {
