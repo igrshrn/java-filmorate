@@ -398,7 +398,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         for (String param : sortParams) {
             switch (param.trim().toLowerCase()) {
                 case "year":
-                    orderBy.add("f.release_date DESC");
+                    orderBy.add("f.release_date");
                     break;
                 case "likes":
                     orderBy.add("COUNT(fl.user_id) DESC");
