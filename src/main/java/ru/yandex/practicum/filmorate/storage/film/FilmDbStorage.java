@@ -391,7 +391,9 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         Collection<Film> results = findMany(sql, params.toArray());
         log.debug("Результаты поиска: {}", results);
 
-        return results;
+        return results.stream()
+                .sorted(Comparator.comparingInt((Film f) -> f.getLikes().size()).reversed())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private String buildOrderByClause(String sortBy) {
