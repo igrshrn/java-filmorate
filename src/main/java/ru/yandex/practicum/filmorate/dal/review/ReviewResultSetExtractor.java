@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
@@ -20,7 +20,7 @@ public class ReviewResultSetExtractor implements ResultSetExtractor<Map<Long, Re
 
     @Override
     public Map<Long, Review> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Map<Long, Review> reviewMap = new HashMap<>();
+        Map<Long, Review> reviewMap = new LinkedHashMap<>();
 
         while (rs.next()) {
             long reviewId = rs.getLong("review_id");

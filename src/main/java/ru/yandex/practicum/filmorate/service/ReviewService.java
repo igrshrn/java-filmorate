@@ -43,7 +43,7 @@ public class ReviewService {
         reviewStorage.update(review);
         Review updatedReview = getReviewById(review.getReviewId());
         log.info("Отзыв обновлен: {}", updatedReview);
-        eventService.addEvent(review.getUserId(), Event.EventType.REVIEW, Event.Operation.UPDATE, review.getReviewId());
+        eventService.addEvent(updatedReview.getUserId(), Event.EventType.REVIEW, Event.Operation.UPDATE, updatedReview.getReviewId());
         return updatedReview;
     }
 
