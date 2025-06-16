@@ -153,13 +153,19 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             ORDER BY likes_count DESC""".formatted(SUB_QUERY);
 
     private static final String SEARCH_FILMS = """
-            SELECT %s
+            SELECT %s,
+            likes_count
             FROM films f
             %s
+            LEFT JOIN (
+                SELECT film_id as fl_id, COUNT(user_id) AS likes_count
+                FROM film_likes
+                GROUP BY film_id
+            ) fl ON f.id = fl.fl_id
             WHERE 1=0
             %s
             GROUP BY f.id, m.id, g.id, d.id, fl.user_id
-            ORDER BY COUNT(DISTINCT fl.user_id) DESC
+            ORDER BY likes_count DESC
             """.formatted(FILM_COLUMNS, FILM_JOIN, "%s");
 
     private static final String GET_RECOMMENDED_FILMS_QUERY = """
@@ -345,7 +351,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         insert(INSERT_LIKE, filmId, userId);
     }
 
-    public boolean checkLike(long filmId, long userId){
+    public boolean checkLike(long filmId, long userId) {
         List<Long> result = jdbc.query(GET_LIKE, (rs, rowNum) -> rs.getLong("film_id"), filmId, userId);
         return !result.isEmpty();
 
@@ -385,15 +391,10 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         String conditionsClause = conditions.isEmpty() ? "" : "OR " + String.join(" OR ", conditions);
         String sql = String.format(SEARCH_FILMS, conditionsClause);
 
-        log.debug("Поиск SQL: {}", sql);
-        log.debug("Параметры поиска: {}", params);
-
         Collection<Film> results = findMany(sql, params.toArray());
         log.debug("Результаты поиска: {}", results);
+        return results;
 
-        return results.stream()
-                .sorted(Comparator.comparingInt((Film f) -> f.getLikes().size()).reversed())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private String buildOrderByClause(String sortBy) {

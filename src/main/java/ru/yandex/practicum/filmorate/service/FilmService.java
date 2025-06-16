@@ -67,19 +67,15 @@ public class FilmService {
         getFilmById(filmId);
         userService.getUserById(userId);
         getFilmById(filmId);
-        System.out.println("film:");
-        System.out.println(getFilmById(filmId));
-        System.out.println("film:");
         boolean checkLike = checkLike(filmId, userId);
-        if(!checkLike) {
+        if (!checkLike) {
             filmStorage.addLike(filmId, userId);
             log.info("Пользователь с id {} поставил лайк фильму с id {}", userId, filmId);
             eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.ADD, filmId);
         }
-
     }
 
-    public boolean checkLike(long filmId, long userId){
+    public boolean checkLike(long filmId, long userId) {
         return filmStorage.checkLike(filmId, userId);
     }
 
