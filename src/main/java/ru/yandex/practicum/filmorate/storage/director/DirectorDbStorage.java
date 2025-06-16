@@ -38,8 +38,8 @@ public class DirectorDbStorage extends BaseRepository<Director> implements Direc
 
     @Override
     public void delete(Long id) {
-        delete(DELETE_DIRECTOR, id);
         delete(DELETE_DIRECTOR_FROM_FILM, id);
+        delete(DELETE_DIRECTOR, id);
     }
 
     @Override

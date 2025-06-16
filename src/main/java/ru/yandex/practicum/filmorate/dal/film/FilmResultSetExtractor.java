@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
@@ -23,7 +24,7 @@ public class FilmResultSetExtractor implements ResultSetExtractor<Map<Long, Film
 
     @Override
     public Map<Long, Film> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Map<Long, Film> filmMap = new HashMap<>();
+        Map<Long, Film> filmMap = new LinkedHashMap<>();
 
         while (rs.next()) {
             long filmId = rs.getLong("film_id");

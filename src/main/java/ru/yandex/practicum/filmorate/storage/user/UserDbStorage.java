@@ -11,6 +11,8 @@ import ru.yandex.practicum.filmorate.exception.AlreadyExistsException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -150,12 +152,20 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     public Collection<UserFriendDto> getFriends(long userId) {
         List<Map<String, Object>> maps = jdbc.queryForList(FIND_FRIENDS, userId);
 
-        return maps.stream().map(map -> UserFriendDto.builder()
-                .id((Long) map.get("friend_id"))
-                .email((String) map.get("friend_email"))
-                .login((String) map.get("friend_login"))
-                .name((String) map.get("friend_name"))
-                .build()
+        return maps.stream().map(map -> {
+                    Date sqlDate = (Date) map.get("friend_birthday");
+                    LocalDate localDate = Optional.ofNullable(sqlDate)
+                            .map(Date::toLocalDate)
+                            .orElse(null);
+
+                    return UserFriendDto.builder()
+                            .id((Long) map.get("friend_id"))
+                            .email((String) map.get("friend_email"))
+                            .login((String) map.get("friend_login"))
+                            .name((String) map.get("friend_name"))
+                            .birthday(localDate)
+                            .build();
+                }
         ).collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -163,12 +173,20 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     public Collection<UserFriendDto> getCommonFriends(long userId, long otherUserId) {
         List<Map<String, Object>> maps = jdbc.queryForList(FIND_COMMON_FRIENDS, userId, otherUserId);
 
-        return maps.stream().map(map -> UserFriendDto.builder()
-                .id((Long) map.get("user_id"))
-                .email((String) map.get("user_email"))
-                .login((String) map.get("user_login"))
-                .name((String) map.get("user_name"))
-                .build()
+        return maps.stream().map(map -> {
+                    Date sqlDate = (Date) map.get("user_birthday");
+                    LocalDate localDate = Optional.ofNullable(sqlDate)
+                            .map(Date::toLocalDate)
+                            .orElse(null);
+
+                    return UserFriendDto.builder()
+                            .id((Long) map.get("user_id"))
+                            .email((String) map.get("user_email"))
+                            .login((String) map.get("user_login"))
+                            .name((String) map.get("user_name"))
+                            .birthday(localDate)
+                            .build();
+                }
         ).collect(Collectors.toCollection(ArrayList::new));
     }
 }

@@ -80,7 +80,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LEFT JOIN directors d ON fd.director_id = d.id
             WHERE f.id IN (
             SELECT fd.film_id FROM film_director fd WHERE fd.director_id = ?)
-            GROUP BY f.id,fl.USER_ID""";
+            GROUP BY f.id,fl.USER_ID, d.id""";
 
     private static final String INSERT = """
             INSERT INTO films (
@@ -128,28 +128,28 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 LIMIT ?""";
 
     private static final String FIND_POPULAR = """
-                SELECT f.id AS film_id,
-                       f.name AS film_name,
-                       f.description AS film_description,
-                       f.release_date AS film_release_date,
-                       f.duration AS film_duration,
-                       m.id AS mpa_id,
-                       m.name AS mpa_name,
-                       g.id AS genre_id,
-                       g.name AS genre_name,
-                       fl.user_id AS user_id,
-                       d.id AS director_id,
-                       d.name AS director_name,
-                       likes_count
-                FROM (%s) as f
-                JOIN mpa m ON f.mpa_id = m.id
-                LEFT JOIN film_genres fg ON f.id = fg.film_id
-                LEFT JOIN genres g ON fg.genre_id = g.id
-                LEFT JOIN film_likes fl ON f.id = fl.film_id
-                LEFT JOIN film_director fd ON f.id = fd.film_id
-                LEFT JOIN directors d ON fd.director_id = d.id
-                GROUP BY f.id, m.id, g.id, fl.user_id, d.id
-                ORDER BY likes_count DESC""".formatted(SUB_QUERY);
+            SELECT f.id AS film_id,
+                   f.name AS film_name,
+                   f.description AS film_description,
+                   f.release_date AS film_release_date,
+                   f.duration AS film_duration,
+                   m.id AS mpa_id,
+                   m.name AS mpa_name,
+                   g.id AS genre_id,
+                   g.name AS genre_name,
+                   fl.user_id AS user_id,
+                   d.id AS director_id,
+                   d.name AS director_name,
+                   likes_count
+            FROM (%s) as f
+            JOIN mpa m ON f.mpa_id = m.id
+            LEFT JOIN film_genres fg ON f.id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.id
+            LEFT JOIN film_likes fl ON f.id = fl.film_id
+            LEFT JOIN film_director fd ON f.id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.id
+            GROUP BY f.id, m.id, g.id, fl.user_id, d.id
+            ORDER BY likes_count DESC""".formatted(SUB_QUERY);
 
     private static final String SEARCH_FILMS = """
             SELECT %s
@@ -157,7 +157,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             %s
             WHERE 1=0
             %s
-            GROUP BY f.id, m.id, g.id, d.id
+            GROUP BY f.id, m.id, g.id, d.id, fl.user_id
             ORDER BY COUNT(DISTINCT fl.user_id) DESC
             """.formatted(FILM_COLUMNS, FILM_JOIN, "%s");
 
@@ -238,6 +238,9 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         insertGenres(film);
         insertDirectors(film);
         log.info("Добавлен фильм: {}", film);
+        film.setGenres(film.getGenres().stream()
+                .sorted(Comparator.comparingLong(Genre::getId))
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
         return film;
     }
 
@@ -251,8 +254,14 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 film.getMpa().getId(),
                 film.getId()
         );
+        if (film.getGenres() != null) {
+            film.setGenres(film.getGenres().stream()
+                    .sorted(Comparator.comparingLong(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new)));
+        }
         updateGenres(film);
-        insertDirectors(film);
+
+        updateDirectors(film);
         log.info("Обновлен фильм: {}", film);
         return film;
     }
@@ -276,7 +285,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         log.info("Удален фильм с ID {}", id);
     }
 
-   @Override
+    @Override
     public Collection<FilmDto> getPopularFilms(int count, Long genre, Integer year) {
         Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
 
@@ -325,7 +334,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                         .name(rs.getString("director_name"))
                         .build());
             }
-        }, genre,genre,year,year,count);
+        }, genre, genre, year, year, count);
 
         return filmMap.values();
     }
@@ -341,12 +350,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getSortedFilm(Long directorId, String sort) {
-        String orderByClause = buildOrderByClause(sort);
+    public Collection<Film> getSortedFilm(Long directorId, String sortBy) {
+        String orderByClause = buildOrderByClause(sortBy);
         String sql = FIND_BY_DIRECTOR_ID;
         if (orderByClause != null) {
             sql += " ORDER BY " + orderByClause;
         }
+
         return findMany(sql, directorId);
     }
 
@@ -377,18 +387,18 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
         return results;
     }
 
-    private String buildOrderByClause(String sort) {
-        if (sort == null || sort.isEmpty()) {
+    private String buildOrderByClause(String sortBy) {
+        if (sortBy == null || sortBy.isEmpty()) {
             return null;
         }
 
-        String[] sortParams = sort.split(",");
+        String[] sortParams = sortBy.split(",");
         List<String> orderBy = new ArrayList<>();
 
         for (String param : sortParams) {
             switch (param.trim().toLowerCase()) {
                 case "year":
-                    orderBy.add("f.release_date ASC");
+                    orderBy.add("f.release_date DESC");
                     break;
                 case "likes":
                     orderBy.add("COUNT(fl.user_id) DESC");
@@ -401,8 +411,13 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     }
 
     private void updateGenres(Film film) {
-        update(DELETE_GENRES, film.getId());
+        delete(DELETE_GENRES, film.getId());
         insertGenres(film);
+    }
+
+    private void updateDirectors(Film film) {
+        delete(DELETE_DIRECTOR, film.getId());
+        insertDirectors(film);
     }
 
     private void insertDirectors(Film film) {
@@ -426,6 +441,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             return;
         }
         List<Object[]> batch = film.getGenres().stream()
+                .sorted(Comparator.comparingLong(Genre::getId))
                 .map(genre -> new Object[]{film.getId(), genre.getId()})
                 .collect(Collectors.toList());
 

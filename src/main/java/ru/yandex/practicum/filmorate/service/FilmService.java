@@ -24,8 +24,8 @@ public class FilmService {
     private final DirectorService directorService;
     private final EventService eventService;
 
-      @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService,DirectorService directorService) {
+    @Autowired
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService, DirectorService directorService) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.genreService = genreService;
@@ -78,13 +78,13 @@ public class FilmService {
         eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.REMOVE, filmId);
     }
 
-    public Collection<FilmDto> getPopularFilms(int count, Long genreId,Integer year) {
-        return filmStorage.getPopularFilms(count,genreId,year);
+    public Collection<FilmDto> getPopularFilms(int count, Long genreId, Integer year) {
+        return filmStorage.getPopularFilms(count, genreId, year);
     }
 
-    public Collection<Film> getSortedFilm(Long id, String sort) {
+    public Collection<Film> getSortedFilm(Long id, String sortBy) {
         directorService.getByID(id);
-        return filmStorage.getSortedFilm(id, sort);
+        return filmStorage.getSortedFilm(id, sortBy);
     }
 
     public Collection<Film> searchFilms(String query, String by) {

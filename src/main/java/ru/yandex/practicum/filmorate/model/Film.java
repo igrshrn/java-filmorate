@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.utils.validator.film.ValidFilm;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Data
@@ -63,7 +64,7 @@ public class Film {
         this.duration = duration;
         this.mpa = mpa;
         this.likes = likes != null ? likes : new HashSet<>();
-        this.genres = genres != null ? genres : new HashSet<>();
+        this.genres = genres != null ? genres : new LinkedHashSet<>();
         this.directors = directors != null ? directors : new HashSet<>();
     }
 }
