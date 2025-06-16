@@ -18,7 +18,7 @@ import java.util.Optional;
 @Repository
 public class ReviewDbStorage extends BaseRepository<Review> implements ReviewStorage {
     private static final String INSERT = "INSERT INTO reviews (content, is_positive, user_id, film_id, useful) VALUES (?, ?, ?, ?, ?)";
-    private static final String UPDATE = "UPDATE reviews SET content = ?, is_positive = ?, user_id = ?, film_id = ?, useful = ? WHERE review_id = ?";
+    private static final String UPDATE = "UPDATE reviews SET content = ?, is_positive = ? WHERE review_id = ?";
     private static final String FIND_BY_ID = "SELECT * FROM reviews WHERE review_id = ?";
     private static final String FIND_ALL = "SELECT * FROM reviews ORDER BY useful DESC LIMIT ? ";
     private static final String FIND_BY_FILM_ID = "SELECT * FROM reviews WHERE film_id = ? ORDER BY useful DESC LIMIT ? ";
@@ -42,9 +42,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     @Override
     public Review update(Review review) {
-        System.out.println("update:");
-        System.out.println(review);
-        update(UPDATE, review.getContent(), review.getIsPositive(), review.getUserId(), review.getFilmId(), review.getUseful(), review.getReviewId());
+        update(UPDATE, review.getContent(), review.getIsPositive(), review.getReviewId());
         return review;
     }
 

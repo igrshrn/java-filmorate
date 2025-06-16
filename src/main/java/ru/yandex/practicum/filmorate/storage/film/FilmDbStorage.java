@@ -105,6 +105,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String DELETE_GENRES = "DELETE FROM film_genres WHERE film_id = ?";
     private static final String INSERT_GENRE = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
     private static final String INSERT_LIKE = "INSERT INTO film_likes (film_id, user_id) VALUES (?, ?)";
+    private static final String GET_LIKE = "SELECT * FROM film_likes where film_id = ? AND user_id = ?";
     private static final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?";
     private static final String DELETE_LIKES = "DELETE FROM film_likes WHERE film_id = ?";
     private static final String DELETE_DIRECTOR = "DELETE FROM film_director WHERE film_id = ?";
@@ -341,12 +342,18 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public void addLike(long filmId, long userId) {
-        update(INSERT_LIKE, filmId, userId);
+        insert(INSERT_LIKE, filmId, userId);
+    }
+
+    public boolean checkLike(long filmId, long userId){
+        List<Long> result = jdbc.query(GET_LIKE, (rs, rowNum) -> rs.getLong("film_id"), filmId, userId);
+        return !result.isEmpty();
+
     }
 
     @Override
     public void removeLike(long filmId, long userId) {
-        update(DELETE_LIKE, filmId, userId);
+        delete(DELETE_LIKE, filmId, userId);
     }
 
     @Override
