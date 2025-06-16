@@ -75,6 +75,7 @@ public class ReviewService {
     }
 
     public void delete(long id) {
+        log.info("Удаляем отзыв с ID: {}", id);
         Review review = getReviewById(id);
         reviewStorage.delete(id);
         log.info("Удален отзыв с ID: {}", id);

@@ -23,6 +23,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     private static final String FIND_ALL = "SELECT * FROM reviews ORDER BY useful DESC LIMIT ? ";
     private static final String FIND_BY_FILM_ID = "SELECT * FROM reviews WHERE film_id = ? ORDER BY useful DESC LIMIT ? ";
     private static final String DELETE = "DELETE FROM reviews WHERE review_id = ?";
+    private static final String DELETE_REVIEW_VOTES = "DELETE FROM review_votes WHERE review_id = ?";
 
     private static final String CHECK_VOTE = "SELECT is_like FROM review_votes WHERE review_id = ? AND user_id = ?";
     private static final String UPDATE_VOTE = "UPDATE review_votes SET is_like = ? WHERE review_id = ? AND user_id = ?";
@@ -63,6 +64,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
 
     @Override
     public void delete(long id) {
+        delete(DELETE_REVIEW_VOTES, id);
         delete(DELETE, id);
     }
 
