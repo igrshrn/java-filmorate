@@ -39,8 +39,8 @@ public class EventDbStorage implements EventStorage {
                 .eventId(rs.getLong("event_id"))
                 .timestamp(rs.getTimestamp("timestamp").getTime())
                 .userId(rs.getLong("user_id"))
-                .eventType(Event.EventType.valueOf(rs.getString("event_type")))
-                .operation(Event.Operation.valueOf(rs.getString("operation")))
+                .eventType(Event.EventType.valueOf(rs.getString("event_type").toUpperCase()))
+                .operation(Event.Operation.valueOf(rs.getString("operation").toUpperCase()))
                 .entityId(rs.getLong("entity_id"))
                 .build();
     }
