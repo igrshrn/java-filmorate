@@ -30,8 +30,8 @@ public class EventDbStorage implements EventStorage {
 
     @Override
     public void deleteFeed(long userId) {
-        String sql = "DELETE FROM events WHERE user_id = ? OR entity_id = ?";
-        jdbcTemplate.update(sql, userId, userId);
+        String sql = "DELETE FROM events WHERE user_id = ?";
+        jdbcTemplate.update(sql, userId);
     }
 
     private Event mapRowToEvent(ResultSet rs, int rowNum) throws SQLException {
@@ -39,8 +39,8 @@ public class EventDbStorage implements EventStorage {
                 .eventId(rs.getLong("event_id"))
                 .timestamp(rs.getTimestamp("timestamp").getTime())
                 .userId(rs.getLong("user_id"))
-                .eventType(Event.EventType.valueOf(rs.getString("event_type")))
-                .operation(Event.Operation.valueOf(rs.getString("operation")))
+                .eventType(Event.EventType.valueOf(rs.getString("event_type").toUpperCase()))
+                .operation(Event.Operation.valueOf(rs.getString("operation").toUpperCase()))
                 .entityId(rs.getLong("entity_id"))
                 .build();
     }
