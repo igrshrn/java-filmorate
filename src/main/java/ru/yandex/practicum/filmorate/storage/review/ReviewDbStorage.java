@@ -29,6 +29,7 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
     private static final String UPDATE_VOTE = "UPDATE review_votes SET is_like = ? WHERE review_id = ? AND user_id = ?";
     private static final String INSERT_VOTE = "INSERT INTO review_votes (review_id, user_id, is_like) VALUES (?, ?, ?)";
     private static final String DELETE_VOTE = "DELETE FROM review_votes WHERE review_id = ? AND user_id = ?";
+    private static final String UPDATE_USEFUL = "UPDATE reviews SET useful = useful + ? WHERE review_id = ?";
 
     public ReviewDbStorage(JdbcTemplate jdbc, ResultSetExtractor<Map<Long, Review>> extractor) {
         super(jdbc, extractor);
@@ -98,24 +99,24 @@ public class ReviewDbStorage extends BaseRepository<Review> implements ReviewSto
                 updateReviewUseful(reviewId, isLike ? 2 : -2);
             }
             // Обновляем запись о голосовании
-            jdbc.update(UPDATE_VOTE, isLike, reviewId, userId);
+            update(UPDATE_VOTE, isLike, reviewId, userId);
+
         } else {
             // Если записи нет, обновляем счетчик на 1
             updateReviewUseful(reviewId, isLike ? 1 : -1);
             // Добавляем новую запись о голосовании
-            jdbc.update(INSERT_VOTE, reviewId, userId, isLike);
+            update(INSERT_VOTE, reviewId, userId, isLike);
         }
     }
 
     private void handleVoteRemoval(long reviewId, long userId, boolean wasLike) {
         // Удаляем запись о голосовании
-        jdbc.update(DELETE_VOTE, reviewId, userId);
+        delete(DELETE_VOTE, reviewId, userId);
         // Обновляем счетчик на -1 или +1 в зависимости от типа удаляемого голоса
         updateReviewUseful(reviewId, wasLike ? -1 : 1);
     }
 
     private void updateReviewUseful(long reviewId, int delta) {
-        String updateUsefulQuery = "UPDATE reviews SET useful = useful + ? WHERE review_id = ?";
-        jdbc.update(updateUsefulQuery, delta, reviewId);
+        update(UPDATE_USEFUL, delta, reviewId);
     }
 }

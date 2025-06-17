@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class DirectorController {
     }
 
     @GetMapping("/{id}")
-    public Director getByID(@PathVariable Long id) {
+    public Director getByID(@PathVariable @Positive Long id) {
         return directorService.getByID(id);
     }
 
@@ -43,7 +44,7 @@ public class DirectorController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable @Positive Long id) {
         directorService.delete(id);
     }
 }

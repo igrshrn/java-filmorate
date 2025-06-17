@@ -4,15 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dal.film.FilmDtoResultSetExtractor;
 import ru.yandex.practicum.filmorate.dal.film.FilmResultSetExtractor;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
-import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,8 +19,11 @@ import java.util.stream.Collectors;
 @Repository
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
-    public FilmDbStorage(JdbcTemplate jdbc, FilmResultSetExtractor extractor) {
+    private final FilmDtoResultSetExtractor filmDtoResultSetExtractor;
+
+    public FilmDbStorage(JdbcTemplate jdbc, FilmResultSetExtractor extractor, FilmDtoResultSetExtractor filmDtoResultSetExtractor) {
         super(jdbc, extractor);
+        this.filmDtoResultSetExtractor = filmDtoResultSetExtractor;
         log.info("FilmResultSetExtractor initialized: {}", extractor != null);
     }
 
@@ -129,11 +130,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 LIMIT ?""";
 
     private static final String FIND_POPULAR = """
-            SELECT f.id AS film_id,
-                   f.name AS film_name,
-                   f.description AS film_description,
-                   f.release_date AS film_release_date,
-                   f.duration AS film_duration,
+            SELECT f.id AS id,
+                   f.name AS name,
+                   f.description AS description,
+                   f.release_date AS release_date,
+                   f.duration AS duration,
                    m.id AS mpa_id,
                    m.name AS mpa_name,
                    g.id AS genre_id,
@@ -294,54 +295,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public Collection<FilmDto> getPopularFilms(int count, Long genre, Integer year) {
-        Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
-
-        jdbc.query(FIND_POPULAR, rs -> {
-            long filmId = rs.getLong("film_id");
-            FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
-                try {
-                    return FilmDto.builder()
-                            .id(rs.getLong("film_id"))
-                            .name(rs.getString("film_name"))
-                            .description(rs.getString("film_description"))
-                            .releaseDate(rs.getDate("film_release_date").toLocalDate())
-                            .duration(rs.getInt("film_duration"))
-                            .mpa(Mpa.builder().build())
-                            .genres(new HashSet<>())
-                            .likes(new HashSet<>())
-                            .likesCount(rs.getLong("likes_count"))
-                            .directors(new HashSet<>())
-                            .build();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Ошибка маппинга", e);
-                }
-            });
-            film.setMpa(Mpa.builder()
-                    .id(rs.getLong("mpa_id"))
-                    .name(rs.getString("mpa_name"))
-                    .build());
-
-            Long genreId = rs.getObject("genre_id", Long.class);
-            if (genreId != null && genreId != 0) {
-                film.getGenres().add(Genre.builder()
-                        .id(genreId)
-                        .name(rs.getString("genre_name"))
-                        .build());
-            }
-
-            Long userId = rs.getObject("user_id", Long.class);
-            if (userId != null && userId != 0) {
-                film.getLikes().add(userId);
-            }
-
-            Long directorId = rs.getObject("director_id", Long.class);
-            if (directorId != null && directorId != 0) {
-                film.getDirectors().add(Director.builder()
-                        .id(directorId)
-                        .name(rs.getString("director_name"))
-                        .build());
-            }
-        }, genre, genre, year, year, count);
+        Map<Long, FilmDto> filmMap = jdbc.query(FIND_POPULAR, filmDtoResultSetExtractor, genre, genre, year, year, count);
 
         return filmMap.values();
     }
@@ -393,8 +347,8 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
         Collection<Film> results = findMany(sql, params.toArray());
         log.debug("Результаты поиска: {}", results);
-        return results;
 
+        return results;
     }
 
     private String buildOrderByClause(String sortBy) {
@@ -465,103 +419,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
-        Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
-
-        jdbc.query(GET_RECOMMENDED_FILMS_QUERY, (rs) -> {
-            long filmId = rs.getLong("id");
-            FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
-                try {
-                    return FilmDto.builder()
-                            .id(rs.getLong("id"))
-                            .name(rs.getString("name"))
-                            .description(rs.getString("description"))
-                            .releaseDate(rs.getDate("release_date").toLocalDate())
-                            .duration(rs.getInt("duration"))
-                            .mpa(Mpa.builder().build())
-                            .genres(new HashSet<>())
-                            .likes(new HashSet<>())
-                            .likesCount(0)
-                            .build();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Ошибка маппинга", e);
-                }
-            });
-            film.setMpa(Mpa.builder()
-                    .id(rs.getLong("mpa_id"))
-                    .name(rs.getString("mpa_name"))
-                    .build());
-            Long genreId = rs.getObject("genre_id", Long.class);
-            if (genreId != null && genreId != 0) {
-                film.getGenres().add(Genre.builder()
-                        .id(genreId)
-                        .name(rs.getString("genre_name"))
-                        .build());
-            }
-            Long userId = rs.getObject("user_id", Long.class);
-            if (userId != null && userId != 0) {
-                film.getLikes().add(userId);
-            }
-            film.setLikesCount(film.getLikes().size());
-            Long directorId = rs.getObject("director_id", Long.class);
-            if (directorId != null && directorId != 0) {
-                film.getDirectors().add(Director.builder()
-                        .id(directorId)
-                        .name(rs.getString("director_name"))
-                        .build());
-            }
-        }, id, id, limit, id);
+        Map<Long, FilmDto> filmMap = jdbc.query(GET_RECOMMENDED_FILMS_QUERY, filmDtoResultSetExtractor, id, id, limit, id);
         return filmMap.values();
     }
 
     public Collection<FilmDto> getCommonFilms(long uId, long friendId) {
-        Map<Long, FilmDto> filmMap = new LinkedHashMap<>();
-
-        jdbc.query(GET_COMMON_FILMS, (rs) -> {
-            long filmId = rs.getLong("id");
-            FilmDto film = filmMap.computeIfAbsent(filmId, k -> {
-                try {
-                    return FilmDto.builder()
-                            .id(rs.getLong("id"))
-                            .name(rs.getString("name"))
-                            .description(rs.getString("description"))
-                            .releaseDate(rs.getDate("release_date").toLocalDate())
-                            .duration(rs.getInt("duration"))
-                            .mpa(Mpa.builder().build())
-                            .genres(new HashSet<>())
-                            .likes(new HashSet<>())
-                            .likesCount(rs.getLong("like_count"))
-                            .build();
-                } catch (SQLException e) {
-                    throw new RuntimeException("Ошибка маппинга", e);
-                }
-            });
-            film.setMpa(Mpa.builder()
-                    .id(rs.getLong("mpa_id"))
-                    .name(rs.getString("mpa_name"))
-                    .build());
-            Long genreId = rs.getObject("genre_id", Long.class);
-            if (genreId != null && genreId != 0) {
-                film.getGenres().add(Genre.builder()
-                        .id(genreId)
-                        .name(rs.getString("genre_name"))
-                        .build());
-            }
-            Long userId = rs.getObject("user_id", Long.class);
-            if (userId != null && userId != 0) {
-                film.getLikes().add(userId);
-            }
-            Long likeCount = rs.getObject("like_count", Long.class);
-            if (likeCount != null && likeCount != 0) {
-                film.getLikes().add(userId);
-            }
-            Long directorId = rs.getObject("director_id", Long.class);
-            if (directorId != null && directorId != 0) {
-                film.getDirectors().add(Director.builder()
-                        .id(directorId)
-                        .name(rs.getString("director_name"))
-                        .build());
-            }
-        }, uId, friendId);
+        Map<Long, FilmDto> filmMap = jdbc.query(GET_COMMON_FILMS, filmDtoResultSetExtractor, uId, friendId);
         return filmMap.values();
     }
 }
