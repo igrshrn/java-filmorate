@@ -8,6 +8,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.dal.director.DirectorResultSetExtractor;
+import ru.yandex.practicum.filmorate.dal.film.FilmDtoResultSetExtractor;
+import ru.yandex.practicum.filmorate.dal.film.FilmDtoRowMapper;
 import ru.yandex.practicum.filmorate.dal.film.FilmResultSetExtractor;
 import ru.yandex.practicum.filmorate.dal.film.FilmRowMapper;
 import ru.yandex.practicum.filmorate.dal.review.ReviewResultSetExtractor;
@@ -30,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @JdbcTest
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@Import({ReviewDbStorage.class, ReviewResultSetExtractor.class, ReviewRowMapper.class, FilmDbStorage.class, DirectorDbStorage.class, DirectorResultSetExtractor.class, UserDbStorage.class, FilmResultSetExtractor.class, FilmRowMapper.class, UserResultSetExtractor.class, UserRowMapper.class})
+@Import({ReviewDbStorage.class, ReviewResultSetExtractor.class, ReviewRowMapper.class, FilmDbStorage.class, DirectorDbStorage.class, DirectorResultSetExtractor.class, UserDbStorage.class, FilmResultSetExtractor.class, FilmDtoResultSetExtractor.class, FilmDtoRowMapper.class, FilmRowMapper.class, UserResultSetExtractor.class, UserRowMapper.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ReviewDbStorageTest {
 
