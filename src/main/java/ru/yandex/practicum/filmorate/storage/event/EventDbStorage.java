@@ -1,47 +1,39 @@
 package ru.yandex.practicum.filmorate.storage.event;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dal.event.EventResultSetExtractor;
 import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
+@Slf4j
 @Repository
-public class EventDbStorage implements EventStorage {
-    private final JdbcTemplate jdbcTemplate;
+public class EventDbStorage extends BaseRepository<Event> implements EventStorage {
+    private static final String INSERT_EVENT = "INSERT INTO events (user_id, event_type, operation, entity_id) VALUES (?,?,?,?)";
+    private static final String SELECT_FEED = "SELECT * FROM events WHERE user_id = ? ORDER BY timestamp ASC";
+    private static final String DELETE_FEED = "DELETE FROM events WHERE user_id = ?";
 
-    public EventDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public EventDbStorage(JdbcTemplate jdbc, EventResultSetExtractor extractor) {
+        super(jdbc, extractor);
+        log.info("EventResultSetExtractor инициализирован: {}", extractor != null);
     }
 
     @Override
     public void addEvent(Event event) {
-        String sql = "INSERT INTO events (user_id, event_type, operation, entity_id) VALUES (?,?,?,?)";
-        jdbcTemplate.update(sql, event.getUserId(), event.getEventType().name(), event.getOperation().name(), event.getEntityId());
+        update(INSERT_EVENT, event.getUserId(), event.getEventType().name(),
+                event.getOperation().name(), event.getEntityId());
     }
 
     @Override
     public List<Event> getFeed(long userId) {
-        String sql = "SELECT * FROM events WHERE user_id =? ORDER BY timestamp ASC";
-        return jdbcTemplate.query(sql, this::mapRowToEvent, userId);
+        return findMany(SELECT_FEED, userId);
     }
 
     @Override
     public void deleteFeed(long userId) {
-        String sql = "DELETE FROM events WHERE user_id = ?";
-        jdbcTemplate.update(sql, userId);
-    }
-
-    private Event mapRowToEvent(ResultSet rs, int rowNum) throws SQLException {
-        return Event.builder()
-                .eventId(rs.getLong("event_id"))
-                .timestamp(rs.getTimestamp("timestamp").getTime())
-                .userId(rs.getLong("user_id"))
-                .eventType(Event.EventType.valueOf(rs.getString("event_type").toUpperCase()))
-                .operation(Event.Operation.valueOf(rs.getString("operation").toUpperCase()))
-                .entityId(rs.getLong("entity_id"))
-                .build();
+        delete(DELETE_FEED, userId);
     }
 }
