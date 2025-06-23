@@ -16,7 +16,7 @@ public final class FilmMapper {
                 .duration(film.getDuration())
                 .mpa(film.getMpa())
                 .genres(film.getGenres())
+                .directors(film.getDirectors())
                 .build();
     }
-
 }

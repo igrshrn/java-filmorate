@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.utils.validator.film.ValidFilm;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Data
@@ -42,6 +43,9 @@ public class Film {
     @NotNull(message = "Рейтинг MPA не может быть пустым")
     private Mpa mpa;
 
+    @NotNull(message = "Режиссер не может быть пустым")
+    private Set<Director> directors;
+
     @JsonCreator
     public Film(
             @JsonProperty("id") long id,
@@ -51,7 +55,8 @@ public class Film {
             @JsonProperty("duration") Integer duration,
             @JsonProperty("likes") Set<Long> likes,
             @JsonProperty("genres") Set<Genre> genres,
-            @JsonProperty("mpa") Mpa mpa) {
+            @JsonProperty("mpa") Mpa mpa,
+            @JsonProperty("directors") Set<Director> directors) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -59,8 +64,7 @@ public class Film {
         this.duration = duration;
         this.mpa = mpa;
         this.likes = likes != null ? likes : new HashSet<>();
-        this.genres = genres != null ? genres : new HashSet<>();
+        this.genres = genres != null ? genres : new LinkedHashSet<>();
+        this.directors = directors != null ? directors : new HashSet<>();
     }
-
 }
-

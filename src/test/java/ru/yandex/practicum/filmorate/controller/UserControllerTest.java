@@ -173,7 +173,6 @@ public class UserControllerTest extends AbstractControllerTest {
         String user1Response = performRequest(HttpMethodEnum.GET, "/users/{id}", userId1)
                 .andReturn().getResponse().getContentAsString();
 
-        System.out.println(user1Response);
         List<Long> friends = objectMapper.readValue(user1Response, User.class).getFriends().keySet()
                 .stream()
                 .toList();

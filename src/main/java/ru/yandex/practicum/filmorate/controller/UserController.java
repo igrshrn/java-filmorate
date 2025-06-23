@@ -5,21 +5,27 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.UserFriendDto;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
+import java.util.List;
 
 @Validated
 @RestController
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
+    private final FilmService filmService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, FilmService filmService) {
         this.userService = userService;
+        this.filmService = filmService;
     }
 
     @PostMapping
@@ -53,7 +59,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(@PathVariable @Positive long id, @PathVariable @Positive long friendId) {
+    public void addFriend(@PathVariable @Positive long id, @PathVariable long friendId) {
         userService.addFriend(id, friendId);
     }
 
@@ -75,5 +81,16 @@ public class UserController {
     @GetMapping("/{id}/friends/common/{otherId}")
     public Collection<UserFriendDto> getCommonFriends(@PathVariable @Positive long id, @PathVariable @Positive long otherId) {
         return userService.getCommonFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Event> getFeed(@PathVariable @Positive long id) {
+        return userService.getFeed(id);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public Collection<FilmDto> getRecommendedFilms(@PathVariable @Positive long id,
+                                                   @RequestParam(required = false, defaultValue = "3") @Positive int limit) {
+        return filmService.getRecommendedFilms(id, limit);
     }
 }

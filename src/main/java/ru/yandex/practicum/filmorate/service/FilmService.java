@@ -5,13 +5,13 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -21,13 +21,17 @@ public class FilmService {
     private final UserService userService;
     private final GenreService genreService;
     private final MpaService mpaService;
+    private final DirectorService directorService;
+    private final EventService eventService;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService) {
+    public FilmService(FilmStorage filmStorage, UserService userService, GenreService genreService, MpaService mpaService, EventService eventService, DirectorService directorService) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.genreService = genreService;
         this.mpaService = mpaService;
+        this.directorService = directorService;
+        this.eventService = eventService;
     }
 
     public Film create(Film film) {
@@ -59,10 +63,20 @@ public class FilmService {
     }
 
     public void addLike(long filmId, long userId) {
+        log.info("Пользователь с id {} пытается поставить лайк фильму с id {}", userId, filmId);
         getFilmById(filmId);
         userService.getUserById(userId);
-        filmStorage.addLike(filmId, userId);
-        log.info("Пользователь с id {} поставил лайк фильму с id {}", userId, filmId);
+        getFilmById(filmId);
+        boolean checkLike = checkLike(filmId, userId);
+        if (!checkLike) {
+            filmStorage.addLike(filmId, userId);
+            log.info("Пользователь с id {} поставил лайк фильму с id {}", userId, filmId);
+        }
+        eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.ADD, filmId);
+    }
+
+    public boolean checkLike(long filmId, long userId) {
+        return filmStorage.checkLike(filmId, userId);
     }
 
     public void deleteLike(long filmId, long userId) {
@@ -70,9 +84,31 @@ public class FilmService {
         userService.getUserById(userId);
         filmStorage.removeLike(filmId, userId);
         log.info("Пользователь с id {} удалил лайк с фильма с id {}", userId, filmId);
+        eventService.addEvent(userId, Event.EventType.LIKE, Event.Operation.REMOVE, filmId);
     }
 
-    public Collection<FilmDto> getPopularFilms(int count) {
-        return filmStorage.getPopularFilms(count);
+    public Collection<FilmDto> getPopularFilms(int count, Long genreId, Integer year) {
+        return filmStorage.getPopularFilms(count, genreId, year);
+    }
+
+    public Collection<Film> getSortedFilm(Long id, String sortBy) {
+        directorService.getByID(id);
+        return filmStorage.getSortedFilm(id, sortBy);
+    }
+
+    public Collection<Film> searchFilms(String query, String by) {
+        if (query == null || query.isBlank() || by == null || by.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> byList = Arrays.asList(by.split(","));
+        return filmStorage.searchFilms(query, byList);
+    }
+
+    public Collection<FilmDto> getRecommendedFilms(long id, int limit) {
+        return filmStorage.getRecommendedFilms(id, limit);
+    }
+
+    public Collection<FilmDto> getCommonFilms(long userId, long friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 }
